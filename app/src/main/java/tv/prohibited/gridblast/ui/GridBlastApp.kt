@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -101,6 +102,10 @@ fun GridBlastApp() {
         context.getSharedPreferences("gridblast", Context.MODE_PRIVATE)
     }
     val haptics = LocalHapticFeedback.current
+    val sounds = remember(context) { GameSounds(context.applicationContext) }
+    DisposableEffect(sounds) {
+        onDispose { sounds.release() }
+    }
     var game by remember(preferences) {
         mutableStateOf(
             GameStateCodec.decode(preferences.getString("session_v1", null))
@@ -118,6 +123,9 @@ fun GridBlastApp() {
     var showSettings by remember { mutableStateOf(false) }
     var hapticsEnabled by remember(preferences) {
         mutableStateOf(preferences.getBoolean("haptics_enabled", true))
+    }
+    var soundEnabled by remember(preferences) {
+        mutableStateOf(preferences.getBoolean("sound_enabled", false))
     }
     var motionEnabled by remember(preferences) {
         mutableStateOf(preferences.getBoolean("motion_enabled", true))
@@ -177,6 +185,7 @@ fun GridBlastApp() {
                 clearSequence++
             }
             if (hapticsEnabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            if (soundEnabled) sounds.play(analysis.linesCleared > 0)
         }
     }
 
@@ -325,6 +334,11 @@ fun GridBlastApp() {
             GridBlastSettingsDialog(
                 hapticsEnabled = hapticsEnabled,
                 motionEnabled = motionEnabled,
+                soundEnabled = soundEnabled,
+                onSoundChanged = { enabled ->
+                    soundEnabled = enabled
+                    preferences.edit().putBoolean("sound_enabled", enabled).apply()
+                },
                 onHapticsChanged = { enabled ->
                     hapticsEnabled = enabled
                     preferences.edit().putBoolean("haptics_enabled", enabled).apply()

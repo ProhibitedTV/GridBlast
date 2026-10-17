@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.dp
 fun GridBlastSettingsDialog(
     hapticsEnabled: Boolean,
     motionEnabled: Boolean,
+    soundEnabled: Boolean,
     onHapticsChanged: (Boolean) -> Unit,
     onMotionChanged: (Boolean) -> Unit,
+    onSoundChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -26,6 +28,17 @@ fun GridBlastSettingsDialog(
         title = { Text("Options") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("Sound effects")
+                    Switch(
+                        checked = soundEnabled,
+                        onCheckedChange = onSoundChanged,
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
