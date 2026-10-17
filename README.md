@@ -10,7 +10,8 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 - Alternatively, **tap a piece**, then **tap its intended top-left board cell**. Tap a selected piece again to deselect it.
 - Your current round and best score save automatically on the device, including if you close the app.
 - **New Game** asks for confirmation when you've scored points, protecting accidental taps.
-- Device vibration provides a small acknowledgement of successful moves.
+- When a move clears lines, the cleared cells flash briefly and the score bonus is shown.
+- The Options menu lets you switch off vibration or clear animations independently. Preferences are saved locally.
 
 ## Build
 
@@ -40,7 +41,7 @@ GridBlast uses independent game code, visuals and naming. It is not affiliated w
 
 ## Next milestones
 
-- Line-clear animations and optional sound/haptic settings
+- Optional original sound effects and improved move feedback
 - Better accessibility and larger-screen layouts
 - Gameplay balance and playtesting on different Android devices
 - App icon, release signing and publication-ready screenshots

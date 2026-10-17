@@ -18,6 +18,16 @@ data class GameState(
     val gameOver: Boolean = false,
 )
 
+data class PlacementAnalysis(
+    val placedIndices: Set<Int>,
+    val clearedIndices: Set<Int>,
+    val clearedRows: List<Int>,
+    val clearedColumns: List<Int>,
+) {
+    val linesCleared: Int get() = clearedRows.size + clearedColumns.size
+    val points: Int get() = placedIndices.size + clearedIndices.size * 10
+}
+
 object GameEngine {
     const val SIZE = 8
     const val TRAY_SIZE = 3
@@ -66,6 +76,33 @@ object GameEngine {
         }
     }
 
+    /**
+     * Pure move analysis used both for scoring and for gameplay feedback.
+     * A cell crossing a completed row and column is cleared only once.
+     */
+    fun analyze(state: GameState, slot: Int, row: Int, col: Int): PlacementAnalysis? {
+        if (state.gameOver || slot !in state.tray.indices) return null
+        val piece = state.tray[slot] ?: return null
+        if (!canPlace(state.board, piece, row, col)) return null
+
+        val placed = piece.cells.map { cell ->
+            (row + cell.row) * SIZE + col + cell.col
+        }.toSet()
+        val filled = state.board.toMutableList()
+        placed.forEach { filled[it] = piece.colorId }
+
+        val rows = (0 until SIZE).filter { r ->
+            (0 until SIZE).all { c -> filled[r * SIZE + c] != 0 }
+        }
+        val cols = (0 until SIZE).filter { c ->
+            (0 until SIZE).all { r -> filled[r * SIZE + c] != 0 }
+        }
+        val cleared = mutableSetOf<Int>()
+        rows.forEach { r -> (0 until SIZE).forEach { c -> cleared += r * SIZE + c } }
+        cols.forEach { c -> (0 until SIZE).forEach { r -> cleared += r * SIZE + c } }
+        return PlacementAnalysis(placed, cleared, rows, cols)
+    }
+
     /** Invalid moves leave the board and tray untouched. */
     fun place(
         state: GameState,
@@ -74,20 +111,11 @@ object GameEngine {
         col: Int,
         random: Random = Random.Default,
     ): GameState {
-        if (state.gameOver || slot !in state.tray.indices) return state
+        val analysis = analyze(state, slot, row, col) ?: return state
         val piece = state.tray[slot] ?: return state
-        if (!canPlace(state.board, piece, row, col)) return state
-
         val board = state.board.toMutableList()
-        piece.cells.forEach { cell -> board[(row + cell.row) * SIZE + col + cell.col] = piece.colorId }
-
-        // Collect completed rows and columns together so intersections only clear once.
-        val rows = (0 until SIZE).filter { r -> (0 until SIZE).all { c -> board[r * SIZE + c] != 0 } }
-        val cols = (0 until SIZE).filter { c -> (0 until SIZE).all { r -> board[r * SIZE + c] != 0 } }
-        val removed = mutableSetOf<Int>()
-        rows.forEach { r -> (0 until SIZE).forEach { c -> removed += r * SIZE + c } }
-        cols.forEach { c -> (0 until SIZE).forEach { r -> removed += r * SIZE + c } }
-        removed.forEach { board[it] = 0 }
+        analysis.placedIndices.forEach { board[it] = piece.colorId }
+        analysis.clearedIndices.forEach { board[it] = 0 }
 
         val remaining = state.tray.toMutableList()
         remaining[slot] = null
@@ -95,7 +123,7 @@ object GameEngine {
         val next = GameState(
             board = board,
             tray = nextTray,
-            score = state.score + piece.cells.size + removed.size * 10,
+            score = state.score + analysis.points,
         )
         return next.copy(gameOver = !hasAnyMove(next))
     }
