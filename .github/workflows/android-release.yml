@@ -1,0 +1,76 @@
+name: Android signed release candidate
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Install Android SDK
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Provide API 37 legacy SDK path
+        run: |
+          if [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
+          fi
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check signing secrets and securely decode keystore
+        env:
+          GRIDBLAST_RELEASE_KEYSTORE_B64: ${{ secrets.GRIDBLAST_RELEASE_KEYSTORE_B64 }}
+          GRIDBLAST_RELEASE_STORE_PASSWORD: ${{ secrets.GRIDBLAST_RELEASE_STORE_PASSWORD }}
+          GRIDBLAST_RELEASE_KEY_ALIAS: ${{ secrets.GRIDBLAST_RELEASE_KEY_ALIAS }}
+          GRIDBLAST_RELEASE_KEY_PASSWORD: ${{ secrets.GRIDBLAST_RELEASE_KEY_PASSWORD }}
+        run: |
+          for name in GRIDBLAST_RELEASE_KEYSTORE_B64 GRIDBLAST_RELEASE_STORE_PASSWORD GRIDBLAST_RELEASE_KEY_ALIAS GRIDBLAST_RELEASE_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "Required release-signing secret missing: $name" >&2
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$GRIDBLAST_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/gridblast-release.keystore"
+          test -s "$RUNNER_TEMP/gridblast-release.keystore"
+          echo "GRIDBLAST_RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/gridblast-release.keystore" >> "$GITHUB_ENV"
+      - name: Test and build signed APK and AAB
+        env:
+          GRIDBLAST_RELEASE_STORE_PASSWORD: ${{ secrets.GRIDBLAST_RELEASE_STORE_PASSWORD }}
+          GRIDBLAST_RELEASE_KEY_ALIAS: ${{ secrets.GRIDBLAST_RELEASE_KEY_ALIAS }}
+          GRIDBLAST_RELEASE_KEY_PASSWORD: ${{ secrets.GRIDBLAST_RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease :app:bundleRelease
+      - name: Verify signed APK and no network/ad permissions
+        run: |
+          apk="app/build/outputs/apk/release/app-release.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk"
+          permissions=$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$apk")
+          printf '%s\n' "$permissions"
+          if printf '%s\n' "$permissions" | grep -Eq 'android.permission.(INTERNET|ACCESS_NETWORK_STATE)|com.google.android.gms.permission.AD_ID'; then
+            echo "Unexpected network or advertising permission!" >&2
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GridBlast-signed-release-candidate
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+      - name: Remove signing keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/gridblast-release.keystore"

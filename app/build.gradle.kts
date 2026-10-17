@@ -3,6 +3,16 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Signing material is supplied only by the developer/CI environment. Never
+// commit keystores, passwords or an auto-generated production signing identity.
+val storePath = System.getenv("GRIDBLAST_RELEASE_KEYSTORE_FILE")
+val storePasswordEnv = System.getenv("GRIDBLAST_RELEASE_STORE_PASSWORD")
+val keyAliasEnv = System.getenv("GRIDBLAST_RELEASE_KEY_ALIAS")
+val keyPasswordEnv = System.getenv("GRIDBLAST_RELEASE_KEY_PASSWORD")
+val releaseSigningAvailable = listOf(
+    storePath, storePasswordEnv, keyAliasEnv, keyPasswordEnv,
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "tv.prohibited.gridblast"
     compileSdk = 37
@@ -13,6 +23,27 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+    }
+
+    if (releaseSigningAvailable) {
+        signingConfigs {
+            create("gridblastRelease") {
+                storeFile = file(requireNotNull(storePath))
+                storePassword = requireNotNull(storePasswordEnv)
+                keyAlias = requireNotNull(keyAliasEnv)
+                keyPassword = requireNotNull(keyPasswordEnv)
+            }
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            // Start with an unminified release while accessibility and device
+            // testing remain in progress. Add shrinker testing before 1.0.
+            isMinifyEnabled = false
+            if (releaseSigningAvailable) {
+                signingConfig = signingConfigs.getByName("gridblastRelease")
+            }
+        }
     }
 
     compileOptions {
