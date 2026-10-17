@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- An original six-tile falling-block glyph. -->
+    <path
+        android:fillColor="#7CE0E2"
+        android:pathData="M28,26h16v16h-16z M47,26h16v16h-16z M28,45h16v16h-16z" />
+    <path
+        android:fillColor="#FFBE6B"
+        android:pathData="M47,45h16v16h-16z M66,45h16v16h-16z" />
+    <path
+        android:fillColor="#AFA1FF"
+        android:pathData="M47,64h16v16h-16z" />
+</vector>

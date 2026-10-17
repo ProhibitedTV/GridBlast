@@ -35,6 +35,15 @@ jobs:
           gradle-version: '9.6.0'
       - name: Test and build
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Check packaged APK has no network or advertising permissions
+        run: |
+          apk="app/build/outputs/apk/debug/app-debug.apk"
+          permissions=$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$apk")
+          printf '%s\n' "$permissions"
+          if printf '%s\n' "$permissions" | grep -Eq 'android.permission.(INTERNET|ACCESS_NETWORK_STATE)|com.google.android.gms.permission.AD_ID'; then
+            echo "Unexpected network or advertising permission!" >&2
+            exit 1
+          fi
       - name: Publish debug APK
         uses: actions/upload-artifact@v4
         with:
