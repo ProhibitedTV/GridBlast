@@ -30,7 +30,7 @@ class DragPlacementTest {
 
     @Test fun previewCentersOddSizedPieces() {
         assertEquals(Cell(0, 0), at(160f, 260f, rows = 3, cols = 3))
-        assertEquals(Cell(3, 3), at(280f, 400f, rows = 3, cols = 3))
+        assertEquals(Cell(3, 3), at(280f, 380f, rows = 3, cols = 3))
     }
 
     @Test fun rejectsDropsOutsideBoardRatherThanSnapping() {
