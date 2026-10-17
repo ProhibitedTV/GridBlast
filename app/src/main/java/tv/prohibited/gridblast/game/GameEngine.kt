@@ -30,6 +30,7 @@ object GameEngine {
         }
     }
 
+    // Original shapes and palette are deliberately independent of any third-party game assets.
     private val shapes = listOf(
         shape("#"),
         shape("##"), shape("###"), shape("####"), shape("#####"),
@@ -41,11 +42,13 @@ object GameEngine {
         shape("#..", "###"), shape("..#", "###"),
     )
 
+    fun pieceFromId(shapeId: Int): Piece? =
+        shapes.getOrNull(shapeId)?.let { cells -> Piece(shapeId, shapeId % 6 + 1, cells) }
+
     fun newGame(random: Random = Random.Default): GameState = GameState(tray = drawTray(random))
 
     private fun drawTray(random: Random): List<Piece?> = List(TRAY_SIZE) {
-        val id = random.nextInt(shapes.size)
-        Piece(id, id % 6 + 1, shapes[id])
+        pieceFromId(random.nextInt(shapes.size))
     }
 
     fun canPlace(board: List<Int>, piece: Piece, row: Int, col: Int): Boolean {
