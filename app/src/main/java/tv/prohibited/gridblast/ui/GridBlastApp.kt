@@ -1,6 +1,8 @@
 package tv.prohibited.gridblast.ui
 
 import android.content.Context
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
@@ -54,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import tv.prohibited.gridblast.game.Cell
@@ -110,6 +115,34 @@ fun GridBlastApp() {
     var boardBounds by remember { mutableStateOf(Rect.Zero) }
     var rootPosition by remember { mutableStateOf(Offset.Zero) }
     var confirmRestart by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+    var hapticsEnabled by remember(preferences) {
+        mutableStateOf(preferences.getBoolean("haptics_enabled", true))
+    }
+    var motionEnabled by remember(preferences) {
+        mutableStateOf(preferences.getBoolean("motion_enabled", true))
+    }
+    var flashCells by remember { mutableStateOf<Set<Int>>(emptySet()) }
+    var clearMessage by remember { mutableStateOf("") }
+    var clearSequence by remember { mutableIntStateOf(0) }
+    val clearFlash = remember { Animatable(0f) }
+
+    LaunchedEffect(clearSequence, motionEnabled) {
+        if (clearSequence > 0 && motionEnabled && flashCells.isNotEmpty()) {
+            clearFlash.snapTo(0.90f)
+            clearFlash.animateTo(0f, animationSpec = tween(durationMillis = 380))
+            flashCells = emptySet()
+        } else {
+            clearFlash.snapTo(0f)
+            flashCells = emptySet()
+        }
+    }
+    LaunchedEffect(clearSequence) {
+        if (clearSequence > 0) {
+            delay(1000)
+            clearMessage = ""
+        }
+    }
 
     fun persist(updated: GameState) {
         val updatedBest = maxOf(bestScore, updated.score)
@@ -125,17 +158,25 @@ fun GridBlastApp() {
         selectedSlot = -1
         activeDrag = null
         confirmRestart = false
+        flashCells = emptySet()
+        clearMessage = ""
         persist(game)
     }
 
     fun place(slot: Int, row: Int, col: Int) {
+        val analysis = GameEngine.analyze(game, slot, row, col) ?: return
         val updated = GameEngine.place(game, slot, row, col)
         if (updated != game) {
             game = updated
             selectedSlot = -1
             activeDrag = null
             persist(updated)
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            if (analysis.linesCleared > 0) {
+                flashCells = if (motionEnabled) analysis.clearedIndices else emptySet()
+                clearMessage = "${analysis.linesCleared} ${if (analysis.linesCleared == 1) "LINE" else "LINES"} CLEARED  •  +${analysis.points}"
+                clearSequence++
+            }
+            if (hapticsEnabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
 
@@ -175,9 +216,14 @@ fun GridBlastApp() {
                             fontWeight = FontWeight.Black,
                             color = highlightColor,
                         )
-                        TextButton(onClick = {
-                            if (game.score > 0) confirmRestart = true else resetGame()
-                        }) { Text("NEW GAME") }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = { showSettings = true }) {
+                                Text("OPTIONS", fontSize = 12.sp)
+                            }
+                            TextButton(onClick = {
+                                if (game.score > 0) confirmRestart = true else resetGame()
+                            }) { Text("NEW", fontSize = 12.sp) }
+                        }
                     }
 
                     Spacer(Modifier.height(12.dp))
@@ -199,6 +245,8 @@ fun GridBlastApp() {
                             previewPiece = draggedPiece,
                             previewCell = dragAnchor,
                             validPreview = validPreview,
+                            flashCells = flashCells,
+                            flashAlpha = clearFlash.value,
                             modifier = Modifier
                                 .size(boardSize)
                                 .onGloballyPositioned { boardBounds = it.boundsInWindow() },
@@ -210,6 +258,7 @@ fun GridBlastApp() {
 
                     Text(
                         text = when {
+                            clearMessage.isNotEmpty() -> clearMessage
                             activeDrag != null -> "Drop your shape onto the board"
                             selectedSlot >= 0 -> "Tap a cell to place, or drag your shape"
                             else -> "Drag a shape to the board, or tap to select"
@@ -272,6 +321,22 @@ fun GridBlastApp() {
             }
         }
 
+        if (showSettings) {
+            GridBlastSettingsDialog(
+                hapticsEnabled = hapticsEnabled,
+                motionEnabled = motionEnabled,
+                onHapticsChanged = { enabled ->
+                    hapticsEnabled = enabled
+                    preferences.edit().putBoolean("haptics_enabled", enabled).apply()
+                },
+                onMotionChanged = { enabled ->
+                    motionEnabled = enabled
+                    preferences.edit().putBoolean("motion_enabled", enabled).apply()
+                },
+                onDismiss = { showSettings = false },
+            )
+        }
+
         if (confirmRestart) {
             AlertDialog(
                 onDismissRequest = { confirmRestart = false },
@@ -312,6 +377,8 @@ private fun Board(
     previewPiece: Piece?,
     previewCell: Cell?,
     validPreview: Boolean,
+    flashCells: Set<Int>,
+    flashAlpha: Float,
     modifier: Modifier,
     onCellTapped: (Int, Int) -> Unit,
 ) {
@@ -333,6 +400,8 @@ private fun Board(
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
                         isPreview && validPreview -> pieceColor(previewPiece!!.colorId).copy(alpha = 0.72f)
+                        row * GameEngine.SIZE + col in flashCells ->
+                            lerp(emptyCellColor, highlightColor, flashAlpha)
                         id != 0 -> pieceColor(id)
                         else -> emptyCellColor
                     }
