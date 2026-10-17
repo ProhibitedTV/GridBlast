@@ -11,7 +11,7 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 - Your current round and best score save automatically on the device, including if you close the app.
 - **New Game** asks for confirmation when you've scored points, protecting accidental taps.
 - When a move clears lines, the cleared cells flash briefly and the score bonus is shown.
-- The Options menu lets you switch off vibration or clear animations independently. Preferences are saved locally.
+- The Options menu lets you independently switch sound, vibration, or clear animations on/off. Original synthesized sound effects are disabled by default. Preferences are saved locally.
 
 ## Build
 
