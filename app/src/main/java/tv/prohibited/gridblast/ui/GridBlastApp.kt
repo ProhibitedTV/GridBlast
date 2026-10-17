@@ -40,7 +40,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -213,7 +212,7 @@ fun GridBlastApp() {
                         text = when {
                             activeDrag != null -> "Drop your shape onto the board"
                             selectedSlot >= 0 -> "Tap a cell to place, or drag your shape"
-                            else -> "Drag a shape to the board, or tap to select",
+                            else -> "Drag a shape to the board, or tap to select"
                         },
                         color = Color(0xFFCAD5E8),
                         textAlign = TextAlign.Center,
