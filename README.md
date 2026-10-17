@@ -6,7 +6,7 @@
 
 Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. The round ends when no available piece can fit anywhere.
 
-- **Drag a piece** from the tray onto the grid. A preview shows exactly which cells will fill; red means it won't fit.
+- **Drag a piece** from the tray onto the grid. The lifted piece and board preview now share the same placement anchor, including near board edges; red means it won't fit.
 - Alternatively, **tap a piece**, then **tap its intended top-left board cell**. Tap a selected piece again to deselect it.
 - Your current round and best score save automatically on the device, including if you close the app.
 - **New Game** asks for confirmation when you've scored points, protecting accidental taps.

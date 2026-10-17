@@ -51,7 +51,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,9 +63,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import kotlin.math.floor
 import kotlin.math.roundToInt
 import tv.prohibited.gridblast.game.Cell
+import tv.prohibited.gridblast.game.DragPlacement
 import tv.prohibited.gridblast.game.GameEngine
 import tv.prohibited.gridblast.game.GameState
 import tv.prohibited.gridblast.game.GameStateCodec
@@ -86,14 +89,10 @@ private val shapeColors = listOf(
 private fun pieceColor(id: Int): Color = shapeColors.getOrElse(id) { highlightColor }
 private data class ActiveDrag(val slot: Int, val point: Offset)
 
-/** Convert absolute window pointer coordinates to the game's grid. */
-private fun gridCell(point: Offset, bounds: Rect): Cell? {
-    if (bounds.width <= 0f || bounds.height <= 0f || !bounds.contains(point)) return null
-    val row = floor((point.y - bounds.top) * GameEngine.SIZE / bounds.height).toInt()
-    val col = floor((point.x - bounds.left) * GameEngine.SIZE / bounds.width).toInt()
-    if (row !in 0 until GameEngine.SIZE || col !in 0 until GameEngine.SIZE) return null
-    return Cell(row, col)
-}
+// The 88dp floating ghost is drawn 100dp above the finger, so its center
+// (the placement reference) sits 56dp above the touch point.
+private val liftOffset = 56.dp
+private val boardPadding = 4.dp
 
 @Composable
 fun GridBlastApp() {
@@ -102,6 +101,9 @@ fun GridBlastApp() {
         context.getSharedPreferences("gridblast", Context.MODE_PRIVATE)
     }
     val haptics = LocalHapticFeedback.current
+    val density = LocalDensity.current
+    val liftPx = with(density) { liftOffset.toPx() }
+    val insetPx = with(density) { boardPadding.toPx() }
     val sounds = remember(context) { GameSounds(context.applicationContext) }
     DisposableEffect(sounds) {
         onDispose { sounds.release() }
@@ -189,8 +191,20 @@ fun GridBlastApp() {
         }
     }
 
+    fun dragTarget(slot: Int, point: Offset): Cell? {
+        val piece = game.tray.getOrNull(slot) ?: return null
+        return DragPlacement.target(
+            fingerX = point.x, fingerY = point.y,
+            boardLeft = boardBounds.left, boardTop = boardBounds.top,
+            boardWidth = boardBounds.width, boardHeight = boardBounds.height,
+            pieceRows = piece.cells.maxOf { it.row } + 1,
+            pieceCols = piece.cells.maxOf { it.col } + 1,
+            liftPx = liftPx, insetPx = insetPx,
+        )
+    }
+
     val draggedPiece = activeDrag?.slot?.let { game.tray.getOrNull(it) }
-    val dragAnchor = activeDrag?.let { gridCell(it.point, boardBounds) }
+    val dragAnchor = activeDrag?.let { dragTarget(it.slot, it.point) }
     val validPreview = dragAnchor != null && draggedPiece != null &&
         GameEngine.canPlace(game.board, draggedPiece, dragAnchor.row, dragAnchor.col)
 
@@ -252,6 +266,7 @@ fun GridBlastApp() {
                         Board(
                             board = game.board,
                             previewPiece = draggedPiece,
+                            selectedPiece = game.tray.getOrNull(selectedSlot),
                             previewCell = dragAnchor,
                             validPreview = validPreview,
                             flashCells = flashCells,
@@ -275,7 +290,9 @@ fun GridBlastApp() {
                         color = Color(0xFFCAD5E8),
                         textAlign = TextAlign.Center,
                         fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 12.dp),
+                        modifier = Modifier
+                            .padding(bottom = 12.dp)
+                            .semantics { liveRegion = LiveRegionMode.Polite },
                     )
 
                     Row(
@@ -296,7 +313,7 @@ fun GridBlastApp() {
                                     activeDrag = ActiveDrag(slot, point)
                                 },
                                 onDrop = { point ->
-                                    val target = gridCell(point, boardBounds)
+                                    val target = dragTarget(slot, point)
                                     if (target != null) place(slot, target.row, target.col)
                                     activeDrag = null
                                 },
@@ -389,6 +406,7 @@ private fun ScorePanel(label: String, value: Int, modifier: Modifier = Modifier)
 private fun Board(
     board: List<Int>,
     previewPiece: Piece?,
+    selectedPiece: Piece?,
     previewCell: Cell?,
     validPreview: Boolean,
     flashCells: Set<Int>,
@@ -419,6 +437,8 @@ private fun Board(
                         id != 0 -> pieceColor(id)
                         else -> emptyCellColor
                     }
+                    val placeable = selectedPiece != null &&
+                        GameEngine.canPlace(board, selectedPiece, row, col)
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -426,10 +446,16 @@ private fun Board(
                             .padding(2.dp)
                             .clip(RoundedCornerShape(5.dp))
                             .background(fill)
-                            .clickable { onCellTapped(row, col) }
+                            .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
-                                contentDescription = "Row ${row + 1}, column ${col + 1}, " +
-                                    if (id == 0) "empty" else "filled"
+                                contentDescription = when {
+                                    placeable ->
+                                        "Row ${row + 1}, column ${col + 1}: place selected shape"
+                                    selectedPiece != null ->
+                                        "Row ${row + 1}, column ${col + 1}: shape does not fit"
+                                    id == 0 -> "Row ${row + 1}, column ${col + 1}: empty"
+                                    else -> "Row ${row + 1}, column ${col + 1}: occupied"
+                                }
                             },
                     )
                 }
@@ -487,8 +513,8 @@ private fun TrayPiece(
             .semantics {
                 contentDescription = when {
                     piece == null -> "Empty shape slot"
-                    selected -> "Selected shape ${slot + 1}. Drag or tap to place."
-                    else -> "Select shape ${slot + 1}, or drag it onto the board"
+                    selected -> "Selected shape ${slot + 1}, ${piece.cells.size} blocks. Tap an available board cell to place."
+                    else -> "Select shape ${slot + 1}, ${piece.cells.size} blocks, or drag onto the board"
                 }
             },
         contentAlignment = Alignment.Center,
