@@ -6,46 +6,63 @@
 
 Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. The round ends when no available piece can fit anywhere.
 
-- **Drag a piece** from the tray onto the grid. The lifted piece and board preview now share the same placement anchor, including near board edges; red means it won't fit.
+- **Drag a piece** from the tray onto the grid. The lifted piece and board preview share the same placement anchor; red means it won't fit.
 - Alternatively, **tap a piece**, then **tap its intended top-left board cell**. Tap a selected piece again to deselect it.
-- Your current round and best score save automatically on the device, including if you close the app.
-- **New Game** asks for confirmation when you've scored points, protecting accidental taps.
-- When a move clears lines, the cleared cells flash briefly and the score bonus is shown.
-- The Options menu lets you independently switch sound, vibration, or clear animations on/off. Original synthesized sound effects are disabled by default. Preferences are saved locally.
+- Your current round and best score save automatically on the device.
+- **New Game** asks for confirmation when you've scored points.
+- Cleared cells briefly flash and the earned points are displayed.
+- **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default.
 
-## Build
+## Build from a clean checkout
 
-Open the repository in Android Studio with JDK 17, Android SDK 37.0, and Gradle 9.6.0. The build uses AGP 9.4.0 and the Compose BOM 2026.08.00.
-
-The Gradle wrapper binary is not yet checked in. With Gradle 9.6.0 installed:
+Requirements: Android SDK 37.0 (with SDK platform tooling), Android Studio or JDK 17, and an internet connection for initial Gradle/Android dependency downloads. **You do not need Gradle installed**: this repository commits the official Gradle 9.6 wrapper and pins the distribution SHA-256.
 
 ```bash
-gradle wrapper --gradle-version 9.6.0
+git clone https://github.com/ProhibitedTV/GridBlast.git
+cd GridBlast
 ./gradlew :app:testDebugUnitTest :app:assembleDebug
 ```
 
-On Windows use `gradlew.bat` after generating the wrapper. CI builds the APK for every pull request; successful runs have a **GridBlast-debug** artifact on the Actions tab. Download the ZIP, extract `app-debug.apk`, then install it on your Android device.
+On Windows, run `gradlew.bat :app:testDebugUnitTest :app:assembleDebug`. Android Studio can open this directory as an existing project. On systems where Android SDK 37 is exposed as `android-37.0`, CI sets an `android-37` compatibility path; your local SDK may need the same symlink until tooling supports the renamed platform.
 
-## Structure
+**Install an alpha:** In GitHub's **Actions → Android CI → successful run**, download `GridBlast-debug`, extract `app-debug.apk`, and install it on your phone. Alternatively use the output at `app/build/outputs/apk/debug/app-debug.apk`.
 
-- `app/src/main/java/tv/prohibited/gridblast/game`: deterministic Android-independent puzzle rules and versioned save-state codec
-- `app/src/main/java/tv/prohibited/gridblast/ui`: Jetpack Compose board, gesture controls, previews and scoring
-- `app/src/test`: JVM tests for gameplay and saved sessions
-- `.github/workflows/android.yml`: build/test and debug APK pipeline
+## Signed release candidates
+
+The workflow at `.github/workflows/android-release.yml` is triggered by a `v*` tag or a manual dispatch. It **fails closed** until you configure these four GitHub Actions secrets:
+
+| Secret | Meaning |
+| --- | --- |
+| `GRIDBLAST_RELEASE_KEYSTORE_B64` | Base64-encoded Android release signing keystore |
+| `GRIDBLAST_RELEASE_STORE_PASSWORD` | Keystore password |
+| `GRIDBLAST_RELEASE_KEY_ALIAS` | Signing key alias |
+| `GRIDBLAST_RELEASE_KEY_PASSWORD` | Signing key password |
+
+Keep an encrypted backup of your release keystore and passwords; losing your original signing identity can prevent future update distribution. **Do not commit a keystore or secrets.** After secrets exist and hardware QA is complete, you can create a version tag or run the release workflow manually. Successful runs produce signed APK and AAB artifacts with their APK signature verified. A build artifact is not automatically a public Play Store listing or GitHub Release.
+
+Normal PR CI also checks unsigned release bundle compilation, validates the committed wrapper, and rejects APKs with internet/network/advertising permissions.
+
+## Architecture
+
+- `app/src/main/java/tv/prohibited/gridblast/game`: deterministic Android-independent game rules, placement geometry and versioned save-state codec
+- `app/src/main/java/tv/prohibited/gridblast/ui`: Compose board, gesture controls, previews and scoring
+- `app/src/test`: JVM gameplay and placement regression tests
+- `.github/workflows/android.yml`: debug CI and privacy gate
+- `.github/workflows/android-release.yml`: guarded signed-release pipeline
+- `PRIVACY.md`: privacy policy
+- `CHANGELOG.md`: release history
 
 ## Privacy and independence
 
-The Android manifest intentionally has no `INTERNET`, advertising ID, or tracking permissions. No ad or analytics dependencies are included. Scores and in-progress game sessions are stored in private app preferences and never uploaded. Clearing app data also clears saved scores.
+No `INTERNET`, advertising ID, location, analytics or tracking permission. Board, score and preferences stay in private Android storage and are never uploaded. See [PRIVACY.md](PRIVACY.md).
 
 GridBlast uses independent game code, visuals and naming. It is not affiliated with Block Blast or its publisher.
 
-## Next milestones
+## Remaining pre-1.0 work
 
-- Optional original sound effects and improved move feedback
-- Better accessibility and larger-screen layouts
-- Gameplay balance and playtesting on different Android devices
-- App icon, release signing and publication-ready screenshots
-- Conventional Gradle wrapper and reproducible release pipeline
+- Verify drag placement, TalkBack, audio behavior and performance on physical phones and tablets.
+- Production screenshots, store metadata and signing secrets.
+- Automated instrumentation tests, feature polish and gameplay balance.
 
 ## License
 
