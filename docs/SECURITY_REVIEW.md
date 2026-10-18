@@ -12,7 +12,7 @@ Last reviewed: October 18, 2026. Applies to the source and checks in this reposi
 | Sensitive data | No personal or sensitive information is required to play; game saves only board, scores and preferences | Review local code and any future SDK additions |
 | Input and save parsing | Versioned bounded game history and validated state codec | Unit and emulator regression suite |
 | CI supply chain | Gradle wrapper JAR matches trusted upstream Git hash and distribution SHA-256; GitHub Actions pinned to explicit commits | CI wrapper check and reviewed Dependabot updates |
-| Build artifacts | No packaged Android permissions, API 36 target, no unreviewed native libraries, non-debuggable release build | Both debug and unsigned release APK checks in CI |
+| Build artifacts | No packaged Android permissions, API 36 target, 16 KB-compatible native library packaging, non-debuggable release build | Both debug and unsigned release APK checks in CI |
 | Signing | Keystore/passwords provided by GitHub secrets, never checked into source; upload AAB and APK signature checks | Signed workflow fails closed with missing secrets; **not yet exercised with production keys** |
 | Signing trigger | Release signing restricted to the checked-out commit on the reviewed main history; manual dispatch rejects unapproved branches | Release workflow ancestry gate |
 | Store data disclosures | Public privacy policy in repository and full offline in-app policy accessible via Options | Emulator UI test and policy checklist |
@@ -24,7 +24,7 @@ Last reviewed: October 18, 2026. Applies to the source and checks in this reposi
 - Enable required status checks, protected `main`, review requirements, tag restrictions, and private vulnerability reporting in repository settings. The connected GitHub integration cannot configure these settings automatically.
 - GitHub Actions/Gradle changes should be reviewed before Dependabot PRs are merged. Pinned actions protect against moving tags, not against a vulnerable action at a pinned commit.
 - Future networking/SDK/ads changes invalidate the 'no collection' assumption. Reassess privacy policy, Data safety, exported components and permissions before every store release.
-- AndroidX Core adds the signature-protected local `tv.prohibited.gridblast.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` to guard internal dynamic receivers on older Android versions. It is narrowly whitelisted in the APK gate; all system, network and advertising permissions are rejected.\n- The native-library gate deliberately fails the release if a bundled `.so` appears; any such dependency needs 16 KB memory-page support verification.
+- AndroidX Core adds the signature-protected local `tv.prohibited.gridblast.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` to guard internal dynamic receivers on older Android versions. It is narrowly whitelisted in the APK gate; all system, network and advertising permissions are rejected.\n- Some transitive Android libraries package native `.so` files. The release checks verify ZIP alignment and every bundled 64-bit ELF load segment against the 16 KB page requirement; future dependency changes are rechecked.
 - App content, original branding/IP rights, screenshots, age rating, real-device stability, and actual Google Play review remain human release requirements.
 
 ## Responsible vulnerability reports

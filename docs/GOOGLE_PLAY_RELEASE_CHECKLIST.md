@@ -11,7 +11,7 @@ Last audited: October 18, 2026. **Not a Google Play approval claim.** GridBlast 
 - [x] `allowBackup=false`; disable legacy backups, Android 12+ cloud extraction, and device transfer of private game records.
 - [x] Restrict exported components and cleartext networking via manifest and a CI security gate.
 - [x] GitHub Actions pinned to reviewed commit SHAs, Gradle distribution SHA-256 verified; Dependabot configured for reviewable updates.
-- [x] No bundled native libraries; any future native dependency must pass Android's 16 KB page-size compatibility review ([Android guidance](https://developer.android.com/guide/practices/page-sizes)).
+- [x] CI verifies APK ZIP alignment and 64-bit native ELF load-segment alignment for Android's 16 KB memory-page requirement ([Android guidance](https://developer.android.com/guide/practices/page-sizes)).
 - [ ] Generate an **owner-controlled upload key**, store it securely offline, and configure the four GitHub Actions secrets in README. Never commit a keystore or use a debug key.
 - [ ] Run the signed-release workflow and verify the resulting `.aab` in Play Console's App Bundle Explorer / testing track. Preserve the upload key, consider Google-generated app signing key, and enroll in **Play App Signing** ([Android signing](https://developer.android.com/studio/publish/app-signing)).
 - [ ] Confirm the final versionCode is unique and increasing, package name `tv.prohibited.gridblast` is registered, and app signing identity matches its intended update strategy.

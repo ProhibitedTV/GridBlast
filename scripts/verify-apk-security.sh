@@ -31,11 +31,10 @@ if [[ "$mode" == "release" ]]; then
     echo "Release APK is debuggable." >&2
     exit 1
   fi
-  # All-current Kotlin/Compose sources are Java bytecode. Native additions
-  # require explicit 16KB-page-alignment review for Google Play acceptance.
-  if unzip -Z1 "$apk" | grep -Eq '^lib/[^/]+/[^/]+\.so$'; then
-    echo "Native libraries require 16 KB page-size verification before release." >&2
-    exit 1
-  fi
+  # Some transitive Android libraries include .so files despite the game
+  # logic being Kotlin. Verify ZIP alignment and ELF load-segment alignment
+  # for 16 KB-page 64-bit Android devices instead of blanket-rejecting them.
+  "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 -v 4 "$apk"
+  python3 scripts/verify-native-elf-alignment.py "$apk"
 fi
-echo "Validated $mode artifact: API 36, only AndroidX private signature permission, no unreviewed native code."
+echo "Validated $mode artifact: API 36, only AndroidX private signature permission, 16 KB native alignment verified."
