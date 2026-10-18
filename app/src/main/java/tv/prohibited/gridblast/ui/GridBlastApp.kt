@@ -68,6 +68,8 @@ import kotlin.math.roundToInt
 import tv.prohibited.gridblast.game.Cell
 import tv.prohibited.gridblast.game.DragPlacement
 import tv.prohibited.gridblast.game.GameEngine
+import tv.prohibited.gridblast.game.GameHistory
+import tv.prohibited.gridblast.game.GameHistoryCodec
 import tv.prohibited.gridblast.game.GameState
 import tv.prohibited.gridblast.game.GameStateCodec
 import tv.prohibited.gridblast.game.MoveHint
@@ -110,12 +112,18 @@ fun GridBlastApp() {
     DisposableEffect(sounds) {
         onDispose { sounds.release() }
     }
-    var game by remember(preferences) {
+    // History and the current board are saved as one atomic preference value.
+    // Legacy alpha installs continue to load their existing session_v1 snapshot.
+    var history by remember(preferences) {
         mutableStateOf(
-            GameStateCodec.decode(preferences.getString("session_v1", null))
-                ?: GameEngine.newGame(),
+            GameHistoryCodec.decode(preferences.getString("history_v1", null))
+                ?: GameHistory(
+                    GameStateCodec.decode(preferences.getString("session_v1", null))
+                        ?: GameEngine.newGame(),
+                ),
         )
     }
+    val game = history.current
     var bestScore by remember(preferences) {
         mutableIntStateOf(maxOf(game.score, preferences.getInt("best_score", 0)))
     }
@@ -157,31 +165,44 @@ fun GridBlastApp() {
         }
     }
 
-    fun persist(updated: GameState) {
-        val updatedBest = maxOf(bestScore, updated.score)
+    fun persist(updated: GameHistory) {
+        val updatedBest = maxOf(bestScore, updated.current.score)
         bestScore = updatedBest
         preferences.edit()
-            .putString("session_v1", GameStateCodec.encode(updated))
+            .putString("history_v1", GameHistoryCodec.encode(updated))
+            // Mirror the current game for compatibility with earlier alphas.
+            .putString("session_v1", GameStateCodec.encode(updated.current))
             .putInt("best_score", updatedBest)
             .apply()
     }
 
     fun resetGame() {
-        game = GameEngine.newGame()
+        history = GameHistory.newGame()
         selectedSlot = -1
         suggestedMove = null
         activeDrag = null
         confirmRestart = false
         flashCells = emptySet()
         clearMessage = ""
-        persist(game)
+        persist(history)
+    }
+
+    fun undoLast() {
+        if (history.previous == null) return
+        history = history.undoLast()
+        selectedSlot = -1
+        suggestedMove = null
+        activeDrag = null
+        flashCells = emptySet()
+        clearMessage = ""
+        persist(history)
     }
 
     fun place(slot: Int, row: Int, col: Int) {
         val analysis = GameEngine.analyze(game, slot, row, col) ?: return
-        val updated = GameEngine.place(game, slot, row, col)
-        if (updated != game) {
-            game = updated
+        val updated = history.place(slot, row, col)
+        if (updated != history) {
+            history = updated
             selectedSlot = -1
             suggestedMove = null
             activeDrag = null
@@ -323,6 +344,11 @@ fun GridBlastApp() {
                                 .semantics { liveRegion = LiveRegionMode.Polite },
                         )
                         TextButton(
+                            onClick = ::undoLast,
+                            enabled = history.previous != null,
+                            modifier = Modifier.testTag("undo-button"),
+                        ) { Text("UNDO", fontSize = 12.sp) }
+                        TextButton(
                             onClick = {
                                 val next = GameEngine.suggestMove(game)
                                 if (next != null) {
@@ -429,6 +455,14 @@ fun GridBlastApp() {
                 title = { Text("No more moves") },
                 text = { Text("Final score: ${game.score}. Ready for another round?") },
                 confirmButton = { TextButton(onClick = ::resetGame) { Text("PLAY AGAIN") } },
+                dismissButton = {
+                    if (history.previous != null) {
+                        TextButton(
+                            onClick = ::undoLast,
+                            modifier = Modifier.testTag("undo-gameover-button"),
+                        ) { Text("UNDO MOVE") }
+                    }
+                },
             )
         }
     }

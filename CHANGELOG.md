@@ -4,6 +4,9 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Free, persistent one-turn Undo, also available on the game-over dialog; never decreases the best score.
+- Existing alpha saves migrate automatically from the legacy session format.
+
 - Free, deterministic best-immediate-score Hint with a suggested move preview; hints never alter the board or score.
 - Compact title and settings controls for narrower phone widths.
 

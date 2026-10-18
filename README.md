@@ -8,11 +8,12 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 
 - **Drag a piece** from the tray onto the grid. The lifted piece and board preview share the same placement anchor; red means it won't fit.
 - Alternatively, **tap a piece**, then **tap its intended top-left board cell**. Tap a selected piece again to deselect it.
-- Your current round and best score save automatically on the device.
+- Your current round, most recent undo checkpoint, and best score save automatically on the device.
 - **New Game** asks for confirmation when you've scored points.
 - Cleared cells briefly flash and the earned points are displayed.
 - **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default.
 - **Hint** is always free and available offline. It previews a suggested legal placement with its immediate point value; tap the highlighted location to play it. Asking for a hint never spends points or moves pieces.
+- **Undo** reverts the most recent successful placement for free, including after game over. Only one turn is available at a time; it survives app restarts, and your all-time best score is never reduced.
 
 ## Build from a clean checkout
 
@@ -45,7 +46,7 @@ Normal PR CI also checks unsigned release bundle compilation, validates the comm
 
 ## Architecture
 
-- `app/src/main/java/tv/prohibited/gridblast/game`: deterministic Android-independent game rules, placement geometry and versioned save-state codec
+- `app/src/main/java/tv/prohibited/gridblast/game`: deterministic Android-independent game rules, placement geometry, one-move history and versioned save-state codecs
 - `app/src/main/java/tv/prohibited/gridblast/ui`: Compose board, gesture controls, previews and scoring
 - `app/src/test`: JVM gameplay and placement regression tests
 - `app/src/androidTest`: instrumentation smoke tests for real UI interactions and persisted state
