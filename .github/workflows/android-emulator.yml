@@ -11,8 +11,13 @@ permissions:
 
 jobs:
   emulator:
+    name: API ${{ matrix.api-level }} UI smoke tests
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [29, 35]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -36,10 +41,10 @@ jobs:
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
       - uses: gradle/actions/setup-gradle@v4
-      - name: Run UI tests on an Android 35 emulator
+      - name: Run UI tests on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.api-level }}
           arch: x86_64
           target: google_apis
           profile: pixel_6
@@ -49,7 +54,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: GridBlast-emulator-test-report
+          name: GridBlast-emulator-report-api${{ matrix.api-level }}
           path: |
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/

@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -19,6 +21,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import tv.prohibited.gridblast.game.GameEngine
+import tv.prohibited.gridblast.game.GameState
+import tv.prohibited.gridblast.game.GameStateCodec
 
 /**
  * Real Android UI smoke tests. The app is exercised through its actual
@@ -36,6 +41,44 @@ class GridBlastUiTest {
         }
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
+    }
+
+    /** Load a known legal board to test edges without relying on random pieces. */
+    private fun loadFixture(shapeIds: List<Int>, occupied: Set<Int> = emptySet()) {
+        val state = GameState(
+            board = List(64) { if (it in occupied) 3 else 0 },
+            tray = shapeIds.map { GameEngine.pieceFromId(it) },
+        )
+        compose.activityRule.scenario.onActivity {
+            it.getSharedPreferences("gridblast", Context.MODE_PRIVATE)
+                .edit().putString("session_v1", GameStateCodec.encode(state)).commit()
+        }
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun oversizedPieceRejectsBottomRightButFitsAtFiveFive() {
+        loadFixture(listOf(11, 0, 1)) // Shape 11 is a full 3x3 square.
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-7-7").assertIsNotEnabled()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("board-cell-5-5").assertIsEnabled().performClick()
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Empty shape slot")
+        compose.onNodeWithTag("score-value").assertTextEquals("9")
+    }
+
+    @Test
+    fun occupiedCellRejectsPlacementWithoutConsumingThePiece() {
+        loadFixture(listOf(0, 1, 11), occupied = setOf(0))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").assertIsNotEnabled()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("board-cell-0-1").assertIsEnabled().performClick()
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Empty shape slot")
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
     }
 
     @Test
