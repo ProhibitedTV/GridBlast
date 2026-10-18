@@ -44,6 +44,8 @@ jobs:
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+      - name: Validate official Gradle wrapper before loading release secrets
+        run: sh scripts/verify-gradle-wrapper.sh
       - name: Check signing secrets and securely decode keystore
         env:
           GRIDBLAST_RELEASE_KEYSTORE_B64: ${{ secrets.GRIDBLAST_RELEASE_KEYSTORE_B64 }}
