@@ -55,15 +55,7 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: |
-            if [ "${{ matrix.form-factor }}" = "compact-320dp" ]; then
-              adb shell wm density 160
-              adb shell wm size 320x720
-              adb shell settings put system font_scale 1.0
-              adb shell wm size
-              adb shell wm density
-            fi
-            ./gradlew --no-daemon :app:connectedDebugAndroidTest
+          script: sh scripts/android-emulator-tests.sh ${{ matrix.form-factor }}
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
