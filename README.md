@@ -12,8 +12,12 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 - **New Game** asks for confirmation when you've scored points.
 - Cleared cells briefly flash and the earned points are displayed.
 - **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default.
-- **Hint** is always free and available offline. It previews a suggested legal placement with its immediate point value; tap the highlighted location to play it. Asking for a hint never spends points or moves pieces.
+- **Hint** is always free and available offline. Press **HINT** to preview a legal move and its point value; then tap the highlighted board cell **or press PLACE** to confirm it. HINT alone never spends points or moves pieces.
 - **Undo** reverts the most recent successful placement for free, including after game over. Only one turn is available at a time; it survives app restarts, and your all-time best score is never reduced.
+
+## Accessibility
+
+Every tray piece is selectable by tap, switch access or screen reader. Once a shape is selected, legal board locations are marked as actionable; illegal placements cannot be activated. **HINT → PLACE** offers a shorter, two-action route to a recommended move without navigating the entire board. Undo, New Game and Options are ordinary accessible buttons. Please report real-device TalkBack problems in [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5); automated semantic tests are not a substitute for human evaluation.
 
 ## Build from a clean checkout
 

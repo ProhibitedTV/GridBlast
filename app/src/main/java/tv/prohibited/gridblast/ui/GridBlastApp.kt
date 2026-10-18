@@ -348,19 +348,48 @@ fun GridBlastApp() {
                             enabled = history.previous != null,
                             modifier = Modifier.testTag("undo-button"),
                         ) { Text("UNDO", fontSize = 12.sp) }
+                        // Two deliberate actions make hints useful without
+                        // requiring screen-reader users to inspect 64 cells.
+                        // HINT never changes game state; PLACE confirms the
+                        // suggested move using the same rules as a board tap.
+                        val currentSuggestion = suggestedMove
                         TextButton(
                             onClick = {
-                                val next = GameEngine.suggestMove(game)
-                                if (next != null) {
-                                    selectedSlot = next.slot
-                                    suggestedMove = next
-                                    activeDrag = null
-                                    clearMessage = ""
+                                if (currentSuggestion != null) {
+                                    place(
+                                        currentSuggestion.slot,
+                                        currentSuggestion.row,
+                                        currentSuggestion.col,
+                                    )
+                                } else {
+                                    val next = GameEngine.suggestMove(game)
+                                    if (next != null) {
+                                        selectedSlot = next.slot
+                                        suggestedMove = next
+                                        activeDrag = null
+                                        clearMessage = ""
+                                    }
                                 }
                             },
                             enabled = !game.gameOver,
-                            modifier = Modifier.testTag("hint-button"),
-                        ) { Text("HINT", fontSize = 12.sp) }
+                            modifier = Modifier
+                                .testTag(
+                                    if (currentSuggestion == null) "hint-button"
+                                    else "place-hint-button",
+                                )
+                                .semantics {
+                                    contentDescription = if (currentSuggestion == null) {
+                                        "Suggest a free legal move"
+                                    } else {
+                                        "Place suggested shape ${currentSuggestion.slot + 1} at " +
+                                            "row ${currentSuggestion.row + 1}, " +
+                                            "column ${currentSuggestion.col + 1} for " +
+                                            "${currentSuggestion.points} points"
+                                    }
+                                },
+                        ) {
+                            Text(if (currentSuggestion == null) "HINT" else "PLACE", fontSize = 12.sp)
+                        }
                     }
 
                     Row(
