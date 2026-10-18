@@ -140,6 +140,49 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun suggestedMoveRequiresSeparatePlaceConfirmation() {
+        loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("hint-button").performClick()
+        compose.onNodeWithTag("place-hint-button")
+            .assertContentDescriptionEquals(
+                "Place suggested shape 1 at row 1, column 8 for 81 points",
+            )
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("place-hint-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("81")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
+        compose.onNodeWithTag("hint-button").assertExists()
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Empty shape slot")
+    }
+
+    @Test
+    fun manuallySelectingPieceCancelsSuggestedPlaceAction() {
+        loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("hint-button").performClick()
+        compose.onNodeWithTag("place-hint-button").assertExists()
+        compose.onNodeWithTag("tray-slot-1").performClick()
+        compose.onNodeWithTag("hint-button").assertExists()
+        compose.onNodeWithTag("place-hint-button").assertDoesNotExist()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
+    fun suggestedPlacementDoesNotPersistAcrossRestart() {
+        loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("hint-button").performClick()
+        compose.onNodeWithTag("place-hint-button").assertExists()
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+        compose.onNodeWithTag("place-hint-button").assertDoesNotExist()
+        compose.onNodeWithTag("hint-button").assertContentDescriptionEquals(
+            "Suggest a free legal move",
+        )
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
     fun hintSuggestsRowClearWithoutSpendingPointsOrMovingPiece() {
         loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
         compose.onNodeWithTag("hint-button").performClick()
