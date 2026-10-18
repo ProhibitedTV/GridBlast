@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
         with:
           packages: 'platform-tools'
           log-accepted-android-sdk-licenses: 'false'
@@ -30,25 +30,22 @@ jobs:
           if [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Validate pinned official Gradle wrapper
         run: |
           test "$(git hash-object gradle/wrapper/gradle-wrapper.jar)" = "b1b8ef56b44f16b14dc800fa8103a6d89abb526f"
           grep -q '^distributionSha256Sum=bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01$' gradle/wrapper/gradle-wrapper.properties
           ./gradlew --version
-      - name: Test and build debug APK and unsigned release bundle
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:bundleRelease
-      - name: Check packaged APK has no network or advertising permissions
+      - name: Verify manifest security and local-data protection
+        run: python3 scripts/verify-android-manifest.py
+      - name: Test and build debug APK, unsigned release APK and bundle
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease
+      - name: Verify debug and release APK targets, permissions and native libraries
         run: |
-          apk="app/build/outputs/apk/debug/app-debug.apk"
-          permissions=$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$apk")
-          printf '%s\n' "$permissions"
-          if printf '%s\n' "$permissions" | grep -Eq 'android.permission.(INTERNET|ACCESS_NETWORK_STATE)|com.google.android.gms.permission.AD_ID'; then
-            echo "Unexpected network or advertising permission!" >&2
-            exit 1
-          fi
+          bash scripts/verify-apk-security.sh debug app/build/outputs/apk/debug/app-debug.apk
+          bash scripts/verify-apk-security.sh release app/build/outputs/apk/release/app-release-unsigned.apk
       - name: Publish debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: GridBlast-debug
           path: app/build/outputs/apk/debug/app-debug.apk

@@ -14,12 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - name: Refuse signing code not on main
+        run: |
+          if [[ "$GITHUB_REF" != refs/heads/main && "$GITHUB_REF" != refs/tags/v* ]]; then
+            echo "Only main or version tags are allowed to request signing." >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor HEAD origin/main || {
+            echo "Release commit is not on the reviewed main branch." >&2
+            exit 1
+          }
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
         with:
           packages: 'platform-tools'
           log-accepted-android-sdk-licenses: 'false'
@@ -30,7 +43,7 @@ jobs:
           if [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Check signing secrets and securely decode keystore
         env:
           GRIDBLAST_RELEASE_KEYSTORE_B64: ${{ secrets.GRIDBLAST_RELEASE_KEYSTORE_B64 }}
@@ -48,29 +61,30 @@ jobs:
           printf '%s' "$GRIDBLAST_RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/gridblast-release.keystore"
           test -s "$RUNNER_TEMP/gridblast-release.keystore"
           echo "GRIDBLAST_RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/gridblast-release.keystore" >> "$GITHUB_ENV"
+      - name: Verify manifest security and local-data protection
+        run: python3 scripts/verify-android-manifest.py
       - name: Test and build signed APK and AAB
         env:
           GRIDBLAST_RELEASE_STORE_PASSWORD: ${{ secrets.GRIDBLAST_RELEASE_STORE_PASSWORD }}
           GRIDBLAST_RELEASE_KEY_ALIAS: ${{ secrets.GRIDBLAST_RELEASE_KEY_ALIAS }}
           GRIDBLAST_RELEASE_KEY_PASSWORD: ${{ secrets.GRIDBLAST_RELEASE_KEY_PASSWORD }}
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease :app:bundleRelease
-      - name: Verify signed APK and no network/ad permissions
+      - name: Verify release APK certificate, AAB signature and privacy gate
         run: |
           apk="app/build/outputs/apk/release/app-release.apk"
+          aab="app/build/outputs/bundle/release/app-release.aab"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk"
-          permissions=$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$apk")
-          printf '%s\n' "$permissions"
-          if printf '%s\n' "$permissions" | grep -Eq 'android.permission.(INTERNET|ACCESS_NETWORK_STATE)|com.google.android.gms.permission.AD_ID'; then
-            echo "Unexpected network or advertising permission!" >&2
-            exit 1
-          fi
-      - uses: actions/upload-artifact@v4
+          jarsigner -verify "$aab" | tee "$RUNNER_TEMP/aab-verify.log"
+          grep -q 'jar verified' "$RUNNER_TEMP/aab-verify.log"
+          bash scripts/verify-apk-security.sh release "$apk"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: GridBlast-signed-release-candidate
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
+          retention-days: 7
       - name: Remove signing keystore
         if: always()
         run: rm -f "$RUNNER_TEMP/gridblast-release.keystore"

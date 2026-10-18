@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Local puzzle progress is intentionally excluded from cloud backup and
+     device-to-device transfer on Android 12+ (OEM behavior varies when only
+     android:allowBackup=false is set). -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+    </device-transfer>
+</data-extraction-rules>
