@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -56,6 +57,69 @@ class GridBlastUiTest {
         }
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
+    }
+
+    @Test
+    fun undoRestoresBoardAndTrayWithoutErasingBestScore() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("best-score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Select shape 1, 1 blocks, or drag onto the board")
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-1-1").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
+    }
+
+    @Test
+    fun savedUndoSurvivesActivityRecreation() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+        compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
+    fun undoIsAvailableFromGameOverDialog() {
+        val blocked = (0 until 64).filter { (it / 8 + it % 8) % 2 != 0 }.toSet()
+        // Square 2x2 cannot fit; after the final single-cell move, game ends.
+        val state = GameState(
+            board = List(64) { if (it in blocked) 3 else 0 },
+            tray = listOf(
+                GameEngine.pieceFromId(0), GameEngine.pieceFromId(9), null,
+            ),
+        )
+        compose.activityRule.scenario.onActivity {
+            it.getSharedPreferences("gridblast", Context.MODE_PRIVATE)
+                .edit().putString("session_v1", GameStateCodec.encode(state))
+                .remove("history_v1").commit()
+        }
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithText("No more moves").assertExists()
+        compose.onNodeWithTag("undo-gameover-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Select shape 1, 1 blocks, or drag onto the board")
     }
 
     @Test

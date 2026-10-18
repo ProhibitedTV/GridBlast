@@ -10,7 +10,7 @@ GridBlast does **not** collect, transmit, share, or sell personal information. I
 
 ## On-device storage
 
-GridBlast stores your current puzzle board, score, high score, and sound/vibration/animation preferences **only in private storage on your Android device**. This information is not transmitted to us or to any server. Clearing the app's storage or uninstalling the game deletes these local records.
+GridBlast stores your current puzzle board, one-step undo checkpoint, score, high score, and sound/vibration/animation preferences **only in private storage on your Android device**. This information is not transmitted to us or to any server. Clearing the app's storage or uninstalling the game deletes these local records.
 
 ## Permissions
 
