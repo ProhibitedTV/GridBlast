@@ -7,7 +7,7 @@ Last audited: October 18, 2026. **Not a Google Play approval claim.** GridBlast 
 - [x] Target **Android 16 / API 36** in `app/build.gradle.kts`, as required for new phone apps and updates from **August 31, 2026** ([Google policy](https://support.google.com/googleplay/android-developer/answer/11926878)).
 - [x] Google Play-ready **Android App Bundle** (`.aab`) task exists, with signing via environment secrets; no signed public upload yet.
 - [x] Android 8+ `minSdk 26`; Android 10 and 15 emulator regression suites, including a compact 320dp layout.
-- [x] No app network/advertising permissions. CI checks the **packaged debug and release APKs**, not just the source manifest.
+- [x] No app network/advertising permissions. CI checks the **packaged debug and release APKs**, not just the source manifest. The only allowed permission is AndroidX Core's app-local signature-level permission for non-exported dynamic receivers.
 - [x] `allowBackup=false`; disable legacy backups, Android 12+ cloud extraction, and device transfer of private game records.
 - [x] Restrict exported components and cleartext networking via manifest and a CI security gate.
 - [x] GitHub Actions pinned to reviewed commit SHAs, Gradle distribution SHA-256 verified; Dependabot configured for reviewable updates.

@@ -7,12 +7,20 @@ test -f "$apk"
 [[ "$mode" == "debug" || "$mode" == "release" ]] || exit 2
 permissions="$("$aapt" dump permissions "$apk")"
 printf '%s\n' "$permissions"
-# GridBlast is an offline game. Any packaged permission requires explicit audit;
-# this blocks transitive SDK additions as well as intentional manifest changes.
-if grep -Ei '(uses-permission|android\.permission\.|com\.google\.android\.gms\.permission\.AD_ID)' <<< "$permissions"; then
-  echo "Unexpected packaged permission. Fail closed pending privacy review." >&2
+# AndroidX Core declares an app-specific signature permission to protect
+# not-exported dynamic broadcast receivers on pre-Android 13 devices.
+# It does not grant network, ad, location or personal-data access.
+# Fail closed for anything except the exact internal AndroidX permission.
+allowed="tv.prohibited.gridblast.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+while IFS= read -r line; do
+  [[ -z "$line" ]] && continue
+  if [[ "$line" == "permission: $allowed" ||
+        "$line" == "uses-permission: name='$allowed'" ]]; then
+    continue
+  fi
+  echo "Unexpected packaged permission: $line" >&2
   exit 1
-fi
+done < <(grep -E '^(uses-permission|permission):' <<< "$permissions" || true)
 badging="$("$aapt" dump badging "$apk")"
 grep -Fq "targetSdkVersion:'36'" <<< "$badging" || {
   echo "Google Play requires Android 16 / API 36 targeting for phone apps in 2026" >&2
@@ -30,4 +38,4 @@ if [[ "$mode" == "release" ]]; then
     exit 1
   fi
 fi
-echo "Validated $mode artifact: API 36, no permissions, no unreviewed native code."
+echo "Validated $mode artifact: API 36, only AndroidX private signature permission, no unreviewed native code."

@@ -6,7 +6,7 @@ Last reviewed: October 18, 2026. Applies to the source and checks in this reposi
 
 | Area | Current control | Verification |
 | --- | --- | --- |
-| Network/data exfiltration | No network or ad permissions; no analytics, account or cloud code; cleartext traffic disabled | Inspect dependencies; fail CI on any packaged permission |
+| Network/data exfiltration | No network or ad permissions; no analytics, account or cloud code; cleartext traffic disabled | Inspect dependencies; fail CI on any packaged permission other than AndroidX Core's exact app-local signature-protected dynamic-receiver permission |
 | App components | Only the launcher activity is intentionally exported; no providers, receivers or services | Python manifest gate rejects new exported components pending review |
 | Private game saves | Android private SharedPreferences; no automatic cloud backup or Android 12+ device-transfer extraction; no external storage | Manifest/XML audit plus emulator privacy screen test |
 | Sensitive data | No personal or sensitive information is required to play; game saves only board, scores and preferences | Review local code and any future SDK additions |
@@ -24,7 +24,7 @@ Last reviewed: October 18, 2026. Applies to the source and checks in this reposi
 - Enable required status checks, protected `main`, review requirements, tag restrictions, and private vulnerability reporting in repository settings. The connected GitHub integration cannot configure these settings automatically.
 - GitHub Actions/Gradle changes should be reviewed before Dependabot PRs are merged. Pinned actions protect against moving tags, not against a vulnerable action at a pinned commit.
 - Future networking/SDK/ads changes invalidate the 'no collection' assumption. Reassess privacy policy, Data safety, exported components and permissions before every store release.
-- The native-library gate deliberately fails the release if a bundled `.so` appears; any such dependency needs 16 KB memory-page support verification.
+- AndroidX Core adds the signature-protected local `tv.prohibited.gridblast.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` to guard internal dynamic receivers on older Android versions. It is narrowly whitelisted in the APK gate; all system, network and advertising permissions are rejected.\n- The native-library gate deliberately fails the release if a bundled `.so` appears; any such dependency needs 16 KB memory-page support verification.
 - App content, original branding/IP rights, screenshots, age rating, real-device stability, and actual Google Play review remain human release requirements.
 
 ## Responsible vulnerability reports
