@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Upgraded the verified Gradle build toolchain to 9.8.1 to address three high-rated security advisories; wrapper and distribution SHA-256 checks are enforced in all build workflows.
+
 - Manifest security: no app backups/device transfer, no cleartext networking, and explicit offline privacy policy in Options.
 - Verified and pinned GitHub Actions revisions, packaged APK privacy/SDK checks, signed-release ancestry and AAB verification gates.
 

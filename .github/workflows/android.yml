@@ -31,10 +31,9 @@ jobs:
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
-      - name: Validate pinned official Gradle wrapper
+      - name: Validate official Gradle 9.8.1 wrapper
         run: |
-          test "$(git hash-object gradle/wrapper/gradle-wrapper.jar)" = "b1b8ef56b44f16b14dc800fa8103a6d89abb526f"
-          grep -q '^distributionSha256Sum=bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01$' gradle/wrapper/gradle-wrapper.properties
+          sh scripts/verify-gradle-wrapper.sh
           ./gradlew --version
       - name: Verify manifest security and local-data protection
         run: python3 scripts/verify-android-manifest.py

@@ -21,7 +21,7 @@ Every tray piece is selectable by tap, switch access or screen reader. Once a sh
 
 ## Build from a clean checkout
 
-Requirements: Android SDK 37.0 (with SDK platform tooling), Android Studio or JDK 17, and an internet connection for initial Gradle/Android dependency downloads. **You do not need Gradle installed**: this repository commits the official Gradle 9.6 wrapper and pins the distribution SHA-256.
+Requirements: Android SDK 37.0 (with SDK platform tooling), Android Studio or JDK 17, and an internet connection for initial Gradle/Android dependency downloads. **You do not need Gradle installed**: this repository commits the official Gradle 9.8.1 wrapper and verifies the wrapper JAR against Gradle's official SHA-256 and pins the distribution ZIP checksum.
 
 ```bash
 git clone https://github.com/ProhibitedTV/GridBlast.git

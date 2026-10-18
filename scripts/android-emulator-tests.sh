@@ -20,4 +20,5 @@ case "${1:-}" in
     ;;
 esac
 
+sh scripts/verify-gradle-wrapper.sh
 ./gradlew --no-daemon :app:connectedDebugAndroidTest
