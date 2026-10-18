@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -37,6 +38,7 @@ fun GridBlastSettingsDialog(
                     Switch(
                         checked = soundEnabled,
                         onCheckedChange = onSoundChanged,
+                        modifier = Modifier.testTag("sound-switch"),
                     )
                 }
                 Row(
@@ -48,6 +50,7 @@ fun GridBlastSettingsDialog(
                     Switch(
                         checked = hapticsEnabled,
                         onCheckedChange = onHapticsChanged,
+                        modifier = Modifier.testTag("haptics-switch"),
                     )
                 }
                 Row(
@@ -59,6 +62,7 @@ fun GridBlastSettingsDialog(
                     Switch(
                         checked = motionEnabled,
                         onCheckedChange = onMotionChanged,
+                        modifier = Modifier.testTag("motion-switch"),
                     )
                 }
                 Text("Settings and progress stay on this device. No account or internet required.")

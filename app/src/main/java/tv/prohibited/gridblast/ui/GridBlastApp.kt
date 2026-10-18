@@ -56,6 +56,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -240,12 +241,12 @@ fun GridBlastApp() {
                             color = highlightColor,
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = { showSettings = true }) {
+                            TextButton(onClick = { showSettings = true }, modifier = Modifier.testTag("options-button")) {
                                 Text("OPTIONS", fontSize = 12.sp)
                             }
                             TextButton(onClick = {
                                 if (game.score > 0) confirmRestart = true else resetGame()
-                            }) { Text("NEW", fontSize = 12.sp) }
+                            }, modifier = Modifier.testTag("new-game-button")) { Text("NEW", fontSize = 12.sp) }
                         }
                     }
 
@@ -273,6 +274,7 @@ fun GridBlastApp() {
                             flashAlpha = clearFlash.value,
                             modifier = Modifier
                                 .size(boardSize)
+                                .testTag("game-board")
                                 .onGloballyPositioned { boardBounds = it.boundsInWindow() },
                             onCellTapped = { row, col ->
                                 if (selectedSlot >= 0 && !game.gameOver) place(selectedSlot, row, col)
@@ -373,8 +375,8 @@ fun GridBlastApp() {
                 onDismissRequest = { confirmRestart = false },
                 title = { Text("Start a new game?") },
                 text = { Text("Your current score will be reset. Your best score will be kept.") },
-                confirmButton = { TextButton(onClick = ::resetGame) { Text("RESTART") } },
-                dismissButton = { TextButton(onClick = { confirmRestart = false }) { Text("CANCEL") } },
+                confirmButton = { TextButton(onClick = ::resetGame, modifier = Modifier.testTag("confirm-restart")) { Text("RESTART") } },
+                dismissButton = { TextButton(onClick = { confirmRestart = false }, modifier = Modifier.testTag("cancel-restart")) { Text("CANCEL") } },
             )
         }
         if (game.gameOver && !confirmRestart) {
@@ -398,7 +400,8 @@ private fun ScorePanel(label: String, value: Int, modifier: Modifier = Modifier)
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(label, fontSize = 12.sp, color = Color(0xFFA9B9D4), fontWeight = FontWeight.SemiBold)
-        Text(value.toString(), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(value.toString(), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White,
+            modifier = Modifier.testTag(if (label == "SCORE") "score-value" else "best-score-value"))
     }
 }
 
@@ -446,6 +449,7 @@ private fun Board(
                             .padding(2.dp)
                             .clip(RoundedCornerShape(5.dp))
                             .background(fill)
+                            .testTag("board-cell-$row-$col")
                             .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
                                 contentDescription = when {
@@ -483,6 +487,7 @@ private fun TrayPiece(
     Box(
         modifier = modifier
             .height(104.dp)
+            .testTag("tray-slot-$slot")
             .onGloballyPositioned { windowOrigin = it.positionInWindow() }
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) Color(0xFF345C69) else panelColor)

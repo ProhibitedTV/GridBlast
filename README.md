@@ -47,6 +47,7 @@ Normal PR CI also checks unsigned release bundle compilation, validates the comm
 - `app/src/main/java/tv/prohibited/gridblast/game`: deterministic Android-independent game rules, placement geometry and versioned save-state codec
 - `app/src/main/java/tv/prohibited/gridblast/ui`: Compose board, gesture controls, previews and scoring
 - `app/src/test`: JVM gameplay and placement regression tests
+- `app/src/androidTest`: instrumentation smoke tests for real UI interactions and persisted state
 - `.github/workflows/android.yml`: debug CI and privacy gate
 - `.github/workflows/android-release.yml`: guarded signed-release pipeline
 - `PRIVACY.md`: privacy policy
@@ -62,7 +63,7 @@ GridBlast uses independent game code, visuals and naming. It is not affiliated w
 
 - Verify drag placement, TalkBack, audio behavior and performance on physical phones and tablets.
 - Production screenshots, store metadata and signing secrets.
-- Automated instrumentation tests, feature polish and gameplay balance.
+- Automated emulator-based UI smoke tests, deeper physical-device validation, feature polish and gameplay balance.
 
 ## License
 
