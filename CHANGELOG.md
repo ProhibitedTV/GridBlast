@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- New three-piece trays protect against random no-move draws: if any shape can fit, at least one of the new pieces is playable. Difficulty and occupied cells are otherwise unchanged.
+
 - Free, persistent one-turn Undo, also available on the game-over dialog; never decreases the best score.
 - Existing alpha saves migrate automatically from the legacy session format.
 
