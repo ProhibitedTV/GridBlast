@@ -58,6 +58,34 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun hintSuggestsRowClearWithoutSpendingPointsOrMovingPiece() {
+        loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("hint-button").performClick()
+        compose.onNodeWithTag("status-message")
+            .assertTextEquals("HINT: row 1, column 8 (+81)")
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("board-cell-0-7").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("81")
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Empty shape slot")
+    }
+
+    @Test
+    fun hintDoesNotPersistOrAlterBoardWhenActivityRestarts() {
+        loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("hint-button").performClick()
+        compose.onNodeWithTag("status-message")
+            .assertTextEquals("HINT: row 1, column 8 (+81)")
+        compose.activityRule.scenario.recreate()
+        compose.waitForIdle()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("board-cell-0-7").assertIsNotEnabled()
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-7").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("81")
+    }
+
+    @Test
     fun oversizedPieceRejectsBottomRightButFitsAtFiveFive() {
         loadFixture(listOf(11, 0, 1)) // Shape 11 is a full 3x3 square.
         compose.onNodeWithTag("tray-slot-0").performClick()

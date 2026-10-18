@@ -70,6 +70,7 @@ import tv.prohibited.gridblast.game.DragPlacement
 import tv.prohibited.gridblast.game.GameEngine
 import tv.prohibited.gridblast.game.GameState
 import tv.prohibited.gridblast.game.GameStateCodec
+import tv.prohibited.gridblast.game.MoveHint
 import tv.prohibited.gridblast.game.Piece
 
 private val backgroundColor = Color(0xFF10172A)
@@ -119,6 +120,7 @@ fun GridBlastApp() {
         mutableIntStateOf(maxOf(game.score, preferences.getInt("best_score", 0)))
     }
     var selectedSlot by remember { mutableIntStateOf(-1) }
+    var suggestedMove by remember { mutableStateOf<MoveHint?>(null) }
     var activeDrag by remember { mutableStateOf<ActiveDrag?>(null) }
     var boardBounds by remember { mutableStateOf(Rect.Zero) }
     var rootPosition by remember { mutableStateOf(Offset.Zero) }
@@ -167,6 +169,7 @@ fun GridBlastApp() {
     fun resetGame() {
         game = GameEngine.newGame()
         selectedSlot = -1
+        suggestedMove = null
         activeDrag = null
         confirmRestart = false
         flashCells = emptySet()
@@ -180,6 +183,7 @@ fun GridBlastApp() {
         if (updated != game) {
             game = updated
             selectedSlot = -1
+            suggestedMove = null
             activeDrag = null
             persist(updated)
             if (analysis.linesCleared > 0) {
@@ -206,8 +210,10 @@ fun GridBlastApp() {
 
     val draggedPiece = activeDrag?.slot?.let { game.tray.getOrNull(it) }
     val dragAnchor = activeDrag?.let { dragTarget(it.slot, it.point) }
-    val validPreview = dragAnchor != null && draggedPiece != null &&
-        GameEngine.canPlace(game.board, draggedPiece, dragAnchor.row, dragAnchor.col)
+    val previewPiece = draggedPiece ?: suggestedMove?.let { game.tray.getOrNull(it.slot) }
+    val previewAnchor = dragAnchor ?: suggestedMove?.let { Cell(it.row, it.col) }
+    val validPreview = previewAnchor != null && previewPiece != null &&
+        GameEngine.canPlace(game.board, previewPiece, previewAnchor.row, previewAnchor.col)
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -229,24 +235,36 @@ fun GridBlastApp() {
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = "GRIDBLAST",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Black,
-                            color = highlightColor,
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = { showSettings = true }, modifier = Modifier.testTag("options-button")) {
-                                Text("OPTIONS", fontSize = 12.sp)
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val compact = maxWidth < 340.dp
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "GRIDBLAST",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontSize = if (compact) 20.sp else 26.sp,
+                                fontWeight = FontWeight.Black,
+                                color = highlightColor,
+                                maxLines = 1,
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(
+                                    onClick = { showSettings = true },
+                                    modifier = Modifier.testTag("options-button"),
+                                ) {
+                                    Text(if (compact) "SET" else "OPTIONS", fontSize = 12.sp)
+                                }
+                                TextButton(
+                                    onClick = {
+                                        if (game.score > 0) confirmRestart = true else resetGame()
+                                    },
+                                    modifier = Modifier.testTag("new-game-button"),
+                                ) { Text("NEW", fontSize = 12.sp) }
                             }
-                            TextButton(onClick = {
-                                if (game.score > 0) confirmRestart = true else resetGame()
-                            }, modifier = Modifier.testTag("new-game-button")) { Text("NEW", fontSize = 12.sp) }
                         }
                     }
 
@@ -266,9 +284,9 @@ fun GridBlastApp() {
                         val boardSize = minOf(maxWidth, maxHeight)
                         Board(
                             board = game.board,
-                            previewPiece = draggedPiece,
+                            previewPiece = previewPiece,
                             selectedPiece = game.tray.getOrNull(selectedSlot),
-                            previewCell = dragAnchor,
+                            previewCell = previewAnchor,
                             validPreview = validPreview,
                             flashCells = flashCells,
                             flashAlpha = clearFlash.value,
@@ -282,20 +300,42 @@ fun GridBlastApp() {
                         )
                     }
 
-                    Text(
-                        text = when {
-                            clearMessage.isNotEmpty() -> clearMessage
-                            activeDrag != null -> "Drop your shape onto the board"
-                            selectedSlot >= 0 -> "Tap a cell to place, or drag your shape"
-                            else -> "Drag a shape to the board, or tap to select"
-                        },
-                        color = Color(0xFFCAD5E8),
-                        textAlign = TextAlign.Center,
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .semantics { liveRegion = LiveRegionMode.Polite },
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = when {
+                                suggestedMove != null ->
+                                    "HINT: row ${suggestedMove!!.row + 1}, column ${suggestedMove!!.col + 1} (+${suggestedMove!!.points})"
+                                clearMessage.isNotEmpty() -> clearMessage
+                                activeDrag != null -> "Drop your shape onto the board"
+                                selectedSlot >= 0 -> "Tap a cell to place, or drag your shape"
+                                else -> "Drag a shape to the board, or tap to select"
+                            },
+                            color = Color(0xFFCAD5E8),
+                            textAlign = TextAlign.Start,
+                            fontSize = 13.sp,
+                            maxLines = 2,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("status-message")
+                                .semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                        TextButton(
+                            onClick = {
+                                val next = GameEngine.suggestMove(game)
+                                if (next != null) {
+                                    selectedSlot = next.slot
+                                    suggestedMove = next
+                                    activeDrag = null
+                                    clearMessage = ""
+                                }
+                            },
+                            enabled = !game.gameOver,
+                            modifier = Modifier.testTag("hint-button"),
+                        ) { Text("HINT", fontSize = 12.sp) }
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -309,8 +349,12 @@ fun GridBlastApp() {
                                 selected = selectedSlot == slot,
                                 enabled = !game.gameOver,
                                 modifier = Modifier.weight(1f),
-                                onSelect = { selectedSlot = if (selectedSlot == slot) -1 else slot },
+                                onSelect = {
+                                    suggestedMove = null
+                                    selectedSlot = if (selectedSlot == slot) -1 else slot
+                                },
                                 onDragPoint = { point ->
+                                    suggestedMove = null
                                     selectedSlot = slot
                                     activeDrag = ActiveDrag(slot, point)
                                 },

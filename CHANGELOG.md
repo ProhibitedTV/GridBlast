@@ -4,6 +4,9 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Free, deterministic best-immediate-score Hint with a suggested move preview; hints never alter the board or score.
+- Compact title and settings controls for narrower phone widths.
+
 - Playable native Kotlin / Jetpack Compose 8×8 block puzzle.
 - Drag-to-place and accessible tap-to-place controls with aligned landing preview.
 - Simultaneous full-row/column clearing, local scoring, and game-over detection.
