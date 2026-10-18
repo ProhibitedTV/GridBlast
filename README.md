@@ -61,9 +61,11 @@ Normal PR CI also checks unsigned release bundle compilation, validates the comm
 
 ## Privacy and independence
 
-No `INTERNET`, advertising ID, location, analytics or tracking permission. Board, score and preferences stay in private Android storage and are never uploaded. See [PRIVACY.md](PRIVACY.md).
+No `INTERNET`, advertising ID, location, analytics or tracking permission. Local saves are excluded from automatic backup and device transfer on supported Android versions, and the privacy policy is readable offline under **Options → Privacy Policy**. Board, score and preferences stay in private Android storage and are never uploaded. See [PRIVACY.md](PRIVACY.md).
 
 GridBlast uses independent game code, visuals and naming. It is not affiliated with Block Blast or its publisher.
+
+See [Google Play release checklist](docs/GOOGLE_PLAY_RELEASE_CHECKLIST.md) and [draft Play listing](docs/PLAY_STORE_LISTING.md) for publication prerequisites. Google Play approval is not guaranteed by a successful build.
 
 ## Remaining pre-1.0 work
 

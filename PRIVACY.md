@@ -1,6 +1,6 @@
 # GridBlast Privacy Policy
 
-**Last updated:** October 17, 2026
+**Last updated:** October 18, 2026
 
 GridBlast is an independent, ad-free, offline Android puzzle game developed by ProhibitedTV.
 
@@ -10,11 +10,11 @@ GridBlast does **not** collect, transmit, share, or sell personal information. I
 
 ## On-device storage
 
-GridBlast stores your current puzzle board, one-step undo checkpoint, score, high score, and sound/vibration/animation preferences **only in private storage on your Android device**. This information is not transmitted to us or to any server. Clearing the app's storage or uninstalling the game deletes these local records.
+GridBlast stores your current puzzle board, one-step undo checkpoint, score, high score, and sound/vibration/animation preferences **only in private storage on your Android device**. The application disables Android cloud backup and declares exclusion rules for Android device-to-device transfer. This information is not transmitted to us or to any server. Clearing the app's storage or uninstalling the game deletes these local records.
 
 ## Permissions
 
-GridBlast does not request internet access, advertising ID access, or location access. Device haptics and local audio are controlled by Android and your in-game preferences.
+GridBlast does not request internet access, advertising ID access, or location access. Network cleartext traffic is disabled in the app manifest. Device haptics and local audio are controlled by Android and your in-game preferences.
 
 ## Children
 

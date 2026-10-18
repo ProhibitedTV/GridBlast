@@ -14,3 +14,11 @@ captures/
 *.jks
 *.keystore
 keystore.properties
+
+# Additional secret material (keystore/export/password files)
+*.p12
+*.pfx
+*.pem
+*.key
+.env
+.env.*

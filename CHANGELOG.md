@@ -4,6 +4,9 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Manifest security: no app backups/device transfer, no cleartext networking, and explicit offline privacy policy in Options.
+- Verified and pinned GitHub Actions revisions, packaged APK privacy/SDK checks, signed-release ancestry and AAB verification gates.
+
 - HINT now offers an explicit PLACE confirmation action with a spoken position and point value, supporting switch and screen-reader navigation without traversing all 64 cells.
 
 - New three-piece trays protect against random no-move draws: if any shape can fit, at least one of the new pieces is playable. Difficulty and occupied cells are otherwise unchanged.

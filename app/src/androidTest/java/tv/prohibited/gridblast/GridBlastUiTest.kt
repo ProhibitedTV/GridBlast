@@ -255,6 +255,20 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun privacyPolicyIsReadableOfflineFromOptions() {
+        compose.onNodeWithTag("options-button").performClick()
+        compose.onNodeWithTag("privacy-button").performClick()
+        compose.onNodeWithText("GridBlast privacy policy — ProhibitedTV").assertExists()
+        compose.onNodeWithText(
+            "GridBlast does not collect, transmit, share or sell personal information. There are no ads, analytics, trackers, accounts or network access.",
+        ).assertExists()
+        compose.onNodeWithTag("privacy-back-button").performClick()
+        compose.onNodeWithTag("sound-switch").assertExists()
+        compose.onNodeWithTag("options-done-button").performClick()
+        compose.onNodeWithTag("options-button").assertExists()
+    }
+
+    @Test
     fun soundPreferenceDefaultsOffAndSurvivesRecreation() {
         compose.onNodeWithTag("options-button").performClick()
         compose.onNodeWithTag("sound-switch").assertIsOff().performClick()
