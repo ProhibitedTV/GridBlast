@@ -4,7 +4,7 @@
 
 ## Play
 
-Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. The round ends when no available piece can fit anywhere.
+Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. New trays guarantee at least one legal placement when any shape can fit, so the next tray cannot end a round purely through bad luck. The round ends when no available piece can fit anywhere.
 
 - **Drag a piece** from the tray onto the grid. The lifted piece and board preview share the same placement anchor; red means it won't fit.
 - Alternatively, **tap a piece**, then **tap its intended top-left board cell**. Tap a selected piece again to deselect it.

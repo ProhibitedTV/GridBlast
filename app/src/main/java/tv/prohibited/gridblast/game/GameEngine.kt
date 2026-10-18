@@ -73,6 +73,36 @@ object GameEngine {
         pieceFromId(random.nextInt(shapes.size))
     }
 
+    /**
+     * A new tray always offers a legal next move when the board has a place
+     * for at least one shape. We keep all three random shapes if any fits.
+     * Only on an otherwise dead-on-arrival tray do we replace one random slot
+     * with a randomly chosen shape that can fit.
+     *
+     * The player must still choose where to place the rescuing piece. No
+     * blocks are cleared, points added, or other pieces changed.
+     */
+    internal fun refillTray(board: List<Int>, random: Random): List<Piece?> {
+        val drawn = drawTray(random)
+        if (drawn.filterNotNull().any { piece ->
+                (0 until SIZE).any { row ->
+                    (0 until SIZE).any { col -> canPlace(board, piece, row, col) }
+                }
+            }) return drawn
+
+        val compatible = shapes.indices.mapNotNull(::pieceFromId).filter { piece ->
+            (0 until SIZE).any { row ->
+                (0 until SIZE).any { col -> canPlace(board, piece, row, col) }
+            }
+        }
+        if (compatible.isEmpty()) return drawn // A genuinely exhausted board.
+
+        return drawn.toMutableList().apply {
+            val replacementSlot = random.nextInt(TRAY_SIZE)
+            this[replacementSlot] = compatible[random.nextInt(compatible.size)]
+        }
+    }
+
     fun canPlace(board: List<Int>, piece: Piece, row: Int, col: Int): Boolean {
         if (board.size != SIZE * SIZE) return false
         return piece.cells.all { cell ->
@@ -165,7 +195,7 @@ object GameEngine {
 
         val remaining = state.tray.toMutableList()
         remaining[slot] = null
-        val nextTray = if (remaining.all { it == null }) drawTray(random) else remaining
+        val nextTray = if (remaining.all { it == null }) refillTray(board, random) else remaining
         val next = GameState(
             board = board,
             tray = nextTray,
