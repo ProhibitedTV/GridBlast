@@ -12,6 +12,7 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 - **New Game** asks for confirmation when you've scored points.
 - Cleared cells briefly flash and the earned points are displayed.
 - **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default.
+- **Hint** is always free and available offline. It previews a suggested legal placement with its immediate point value; tap the highlighted location to play it. Asking for a hint never spends points or moves pieces.
 
 ## Build from a clean checkout
 
@@ -61,7 +62,7 @@ GridBlast uses independent game code, visuals and naming. It is not affiliated w
 
 ## Remaining pre-1.0 work
 
-- Verify drag placement, TalkBack, audio behavior and performance on physical phones and tablets.
+- Verify drag placement, hints, compact toolbar, TalkBack, audio behavior and performance on physical phones and tablets.
 - Production screenshots, store metadata and signing secrets.
 - Automated emulator-based UI smoke tests, deeper physical-device validation, feature polish and gameplay balance.
 

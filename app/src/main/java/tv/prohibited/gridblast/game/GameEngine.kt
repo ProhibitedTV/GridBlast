@@ -28,6 +28,18 @@ data class PlacementAnalysis(
     val points: Int get() = placedIndices.size + clearedIndices.size * 10
 }
 
+/**
+ * A free, optional suggestion. Pure data: requesting a hint never places a
+ * piece or changes score, board, tray or saved session.
+ */
+data class MoveHint(
+    val slot: Int,
+    val row: Int,
+    val col: Int,
+    val points: Int,
+    val linesCleared: Int,
+)
+
 object GameEngine {
     const val SIZE = 8
     const val TRAY_SIZE = 3
@@ -101,6 +113,40 @@ object GameEngine {
         rows.forEach { r -> (0 until SIZE).forEach { c -> cleared += r * SIZE + c } }
         cols.forEach { c -> (0 until SIZE).forEach { r -> cleared += r * SIZE + c } }
         return PlacementAnalysis(placed, cleared, rows, cols)
+    }
+
+    /**
+     * Suggest the highest immediate-value legal placement.
+     *
+     * Favors clearing lines, then placing larger pieces, then deterministic
+     * top-to-bottom/left-to-right order. No randomness or game state mutation.
+     * This is a one-move heuristic, not a promise of a winnable round.
+     */
+    fun suggestMove(state: GameState): MoveHint? {
+        if (state.gameOver) return null
+        var best: MoveHint? = null
+        for (slot in state.tray.indices) {
+            if (state.tray[slot] == null) continue
+            for (row in 0 until SIZE) {
+                for (col in 0 until SIZE) {
+                    val analysis = analyze(state, slot, row, col) ?: continue
+                    val candidate = MoveHint(
+                        slot = slot,
+                        row = row,
+                        col = col,
+                        points = analysis.points,
+                        linesCleared = analysis.linesCleared,
+                    )
+                    // Equal scores retain the first (stable) slot/row/column.
+                    if (best == null || candidate.points > best.points ||
+                        (candidate.points == best.points &&
+                            candidate.linesCleared > best.linesCleared)) {
+                        best = candidate
+                    }
+                }
+            }
+        }
+        return best
     }
 
     /** Invalid moves leave the board and tray untouched. */
