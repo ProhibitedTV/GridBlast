@@ -64,7 +64,7 @@ GridBlast uses independent game code, visuals and naming. It is not affiliated w
 
 - Verify drag placement, hints, compact toolbar, TalkBack, audio behavior and performance on physical phones and tablets.
 - Production screenshots, store metadata and signing secrets.
-- Automated emulator-based UI smoke tests, deeper physical-device validation, feature polish and gameplay balance.
+- Automated emulator UI tests on Android 10, Android 15, and an Android 15 320dp-wide phone layout; deeper physical-device validation, feature polish and gameplay balance.
 
 ## License
 

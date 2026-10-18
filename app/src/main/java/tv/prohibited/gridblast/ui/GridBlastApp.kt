@@ -244,7 +244,7 @@ fun GridBlastApp() {
                         ) {
                             Text(
                                 text = "GRIDBLAST",
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).testTag("game-title"),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontSize = if (compact) 20.sp else 26.sp,
                                 fontWeight = FontWeight.Black,

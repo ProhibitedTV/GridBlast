@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -55,6 +56,23 @@ class GridBlastUiTest {
         }
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
+    }
+
+    @Test
+    fun headerAndBoardControlsStayOnScreen() {
+        val root = compose.onRoot().getUnclippedBoundsInRoot()
+        val title = compose.onNodeWithTag("game-title").getUnclippedBoundsInRoot()
+        val options = compose.onNodeWithTag("options-button").getUnclippedBoundsInRoot()
+        val newGame = compose.onNodeWithTag("new-game-button").getUnclippedBoundsInRoot()
+        val hint = compose.onNodeWithTag("hint-button").getUnclippedBoundsInRoot()
+        val board = compose.onNodeWithTag("game-board").getUnclippedBoundsInRoot()
+        val tray = compose.onNodeWithTag("tray-slot-2").getUnclippedBoundsInRoot()
+        assertTrue("title and options cannot overlap", title.right <= options.left)
+        assertTrue("options and new game cannot overlap", options.right <= newGame.left)
+        assertTrue("toolbar must fit on screen", newGame.right <= root.right)
+        assertTrue("hint must fit on screen", hint.right <= root.right)
+        assertTrue("board must fit in viewport", board.left >= root.left && board.right <= root.right)
+        assertTrue("tray must fit in viewport", tray.right <= root.right && tray.bottom <= root.bottom)
     }
 
     @Test
