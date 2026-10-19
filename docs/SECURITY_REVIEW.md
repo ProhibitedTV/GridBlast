@@ -12,7 +12,7 @@ Last reviewed: October 18, 2026. Applies to the source and checks in this reposi
 | Sensitive data | No personal or sensitive information is required to play; game saves only board, scores and preferences | Review local code and any future SDK additions |
 | Input and save parsing | Versioned bounded game history and validated state codec | Unit and emulator regression suite |
 | CI supply chain | Gradle 9.8.1 wrapper JAR matches official upstream SHA-256 and the distribution SHA-256 is verified; GitHub Actions pinned to explicit commits | CI wrapper SHA-256 check on normal, emulator and signed-release builds; reviewed Dependabot updates |
-| Build artifacts | No packaged Android permissions, API 36 target, 16 KB-compatible native library packaging, non-debuggable release build | Both debug and unsigned release APK checks in CI |
+| Build artifacts | No unexpected packaged Android permissions, API 36 target, 16 KB-compatible native library packaging, non-debuggable release build | Both debug and unsigned release APK checks in CI |
 | Signing | Keystore/passwords provided by GitHub secrets, never checked into source; upload AAB and APK signature checks | Signed workflow fails closed with missing secrets; **not yet exercised with production keys** |
 | Signing trigger | Release signing restricted to the checked-out commit on the reviewed main history; manual dispatch rejects unapproved branches | Release workflow ancestry gate |
 | Store data disclosures | Public privacy policy in repository and full offline in-app policy accessible via Options | Emulator UI test and policy checklist |
@@ -20,6 +20,10 @@ Last reviewed: October 18, 2026. Applies to the source and checks in this reposi
 ## Toolchain vulnerability remediation (October 18, 2026)
 
 Upgraded from Gradle 9.6.0 to **9.8.1**. The Gradle team identifies three high-rated vulnerabilities fixed by 9.8.1, including unauthenticated worker/daemon deserialization and dependency-repository SSL-failure handling. We independently checked the Gradle distribution and wrapper SHA-256 against https://gradle.org/release-checksums/ and made the CI/release workflows validate the checked-in wrapper before any release secrets are loaded.
+
+## Dependency upgrade validation (October 18, 2026)
+
+The Android application plugin is updated to 9.4.1, the Compose compiler plugin to Kotlin 2.4.21, and the Compose libraries BOM to 2026.09.00. These versions are checked together on the patched Gradle 9.8.1 wrapper in the JVM/build/APK policy gate and Android API 29/35/compact emulator matrix. This does not replace a third-party vulnerability/license audit.
 
 ## Security boundaries and limitations
 
