@@ -48,6 +48,8 @@ Keep an encrypted backup of your release keystore and passwords; losing your ori
 
 Normal PR CI also checks unsigned release bundle compilation, validates the committed wrapper, and rejects APKs with internet/network/advertising permissions.
 
+**Signing smoke tests:** `.github/workflows/android-signing-smoke.yml` creates a **new disposable test key for every CI run**, compiles and verifies signed APK/AAB outputs, then deletes the test key. Those artifacts are **never uploaded** because they are not usable as a Play production signing identity. This validates the release signing code path without exposing or requiring your real upload keystore. Actual Google Play publishing still requires the four owner-configured signing secrets and a separately verified signed release.
+
 ## Architecture
 
 - `app/src/main/java/tv/prohibited/gridblast/game`: deterministic Android-independent game rules, placement geometry, one-move history and versioned save-state codecs
