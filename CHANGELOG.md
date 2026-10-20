@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- HINT now looks one move ahead and prefers a placement that keeps the round alive over an immediately terminal high score; ties remain deterministic, and forced-loss positions still get a hint.
+
 - Updated Android Gradle Plugin 9.4.1, Kotlin Compose compiler 2.4.21 and Compose BOM 2026.09.00 together, validated against the Gradle 9.8.1 toolchain and Android emulator matrix.
 
 - Upgraded the verified Gradle build toolchain to 9.8.1 to address three high-rated security advisories; wrapper and distribution SHA-256 checks are enforced in all build workflows.
