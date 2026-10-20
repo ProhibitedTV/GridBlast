@@ -146,15 +146,21 @@ object GameEngine {
     }
 
     /**
-     * Suggest the highest immediate-value legal placement.
+     * Suggest the highest-scoring move that keeps the round alive, if possible.
      *
-     * Favors clearing lines, then placing larger pieces, then deterministic
-     * top-to-bottom/left-to-right order. No randomness or game state mutation.
-     * This is a one-move heuristic, not a promise of a winnable round.
+     * Some legal placements strand the other tray pieces and end the round.
+     * Prefer a non-terminal move to a higher-scoring terminal move; if every
+     * legal move loses, still offer the best available placement. Within each
+     * category, prefer points, then lines cleared, then stable slot/row/column.
+     *
+     * Simulate with a private seeded RNG so a hint uses the same refill and
+     * game-over rules as a real turn without spending gameplay randomness or
+     * mutating the player's session. This is only a one-move lookahead.
      */
     fun suggestMove(state: GameState): MoveHint? {
         if (state.gameOver) return null
         var best: MoveHint? = null
+        var bestSurvives = false
         for (slot in state.tray.indices) {
             if (state.tray[slot] == null) continue
             for (row in 0 until SIZE) {
@@ -167,11 +173,16 @@ object GameEngine {
                         points = analysis.points,
                         linesCleared = analysis.linesCleared,
                     )
-                    // Equal scores retain the first (stable) slot/row/column.
-                    if (best == null || candidate.points > best.points ||
-                        (candidate.points == best.points &&
-                            candidate.linesCleared > best.linesCleared)) {
+                    val survives = !place(state, slot, row, col, Random(0)).gameOver
+                    // If the only way to stay alive scores fewer points, favor
+                    // survival. Forced-loss hints remain available.
+                    if (best == null || (survives && !bestSurvives) ||
+                        (survives == bestSurvives &&
+                            (candidate.points > best.points ||
+                                (candidate.points == best.points &&
+                                    candidate.linesCleared > best.linesCleared)))) {
                         best = candidate
+                        bestSurvives = survives
                     }
                 }
             }
