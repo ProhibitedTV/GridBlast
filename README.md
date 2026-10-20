@@ -12,7 +12,7 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 - **New Game** asks for confirmation when you've scored points.
 - Cleared cells briefly flash and the earned points are displayed.
 - **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default.
-- **Hint** is always free and available offline. Press **HINT** to preview a legal move and its point value; then tap the highlighted board cell **or press PLACE** to confirm it. HINT alone never spends points or moves pieces.
+- **Hint** is always free and available offline. Press **HINT** to preview a move and its point value; it prefers moves that do not immediately end the round, even when they score fewer points. When all moves lose, it still suggests the best scoring move. Tap the highlighted board cell **or press PLACE** to confirm it. HINT alone never spends points or moves pieces.
 - **Undo** reverts the most recent successful placement for free, including after game over. Only one turn is available at a time; it survives app restarts, and your all-time best score is never reduced.
 
 ## Accessibility
