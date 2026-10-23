@@ -139,4 +139,62 @@ class MoveHintTest {
         assertEquals(MoveHint(0, 0, 0, 9, 0), hint)
         assertTrue(GameEngine.place(state, hint.slot, hint.row, hint.col, Random(5)).gameOver)
     }
+
+    /**
+     * A slow independent oracle: evaluate every legal move through a real
+     * engine turn. The optimized hint must choose exactly the same move
+     * (including survival, scoring and stable tie-breaking).
+     */
+    private fun referenceHint(state: GameState): MoveHint? {
+        var best: MoveHint? = null
+        var bestSurvives = false
+        for (slot in state.tray.indices) {
+            if (state.tray[slot] == null) continue
+            for (row in 0 until GameEngine.SIZE) {
+                for (col in 0 until GameEngine.SIZE) {
+                    val analysis = GameEngine.analyze(state, slot, row, col) ?: continue
+                    val survives = !GameEngine.place(state, slot, row, col, Random(11)).gameOver
+                    val candidate = MoveHint(slot, row, col, analysis.points, analysis.linesCleared)
+                    if (best == null || (survives && !bestSurvives) ||
+                        (survives == bestSurvives &&
+                            (candidate.points > best.points ||
+                                (candidate.points == best.points &&
+                                    candidate.linesCleared > best.linesCleared)))
+                    ) {
+                        best = candidate
+                        bestSurvives = survives
+                    }
+                }
+            }
+        }
+        return best
+    }
+
+    @Test fun optimizedHintsMatchRealTurnsOnVariedSeededBoards() {
+        val random = Random(20261022)
+        val densities = listOf(0, 12, 25, 42, 60, 78, 95)
+        repeat(84) { iteration ->
+            val density = densities[iteration % densities.size]
+            val board = List(GameEngine.SIZE * GameEngine.SIZE) {
+                if (random.nextInt(100) < density) random.nextInt(1, 7) else 0
+            }
+            val tray = List(GameEngine.TRAY_SIZE) { slot ->
+                if (iteration % 3 == 0 && slot != 0) null
+                else if (iteration % 3 == 1 && slot == 2) null
+                else GameEngine.pieceFromId(random.nextInt(22))
+            }
+            val state = GameState(board = board, tray = tray, score = iteration * 100)
+            val boardBefore = state.board.toList()
+            val trayBefore = state.tray.toList()
+
+            assertEquals(
+                "Hint differs from full engine simulation at board $iteration",
+                referenceHint(state),
+                GameEngine.suggestMove(state),
+            )
+            assertEquals(boardBefore, state.board)
+            assertEquals(trayBefore, state.tray)
+            assertEquals(iteration * 100, state.score)
+        }
+    }
 }
