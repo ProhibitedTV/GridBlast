@@ -202,7 +202,7 @@ class GridBlastUiTest {
         // A hinted row clear highlights both the existing cells and the final
         // placement. The descriptions help screen-reader players anticipate it.
         compose.onNodeWithTag("board-cell-0-0").assertContentDescriptionEquals(
-            "Row 1, column 1: will clear on placement",
+            "Row 1, column 1: will clear if preview is confirmed",
         )
         compose.onNodeWithTag("board-cell-0-7").assertContentDescriptionEquals(
             "Row 1, column 8: place selected shape and clear completed lines",
@@ -212,6 +212,31 @@ class GridBlastUiTest {
         compose.onNodeWithTag("score-value").assertTextEquals("81")
         compose.onNodeWithTag("board-cell-0-0").assertContentDescriptionEquals(
             "Row 1, column 1: empty",
+        )
+    }
+
+    @Test
+    fun previewNeverPromisesClearWhenDifferentLegalAnchorIsTapped() {
+        // The elbow at (0,0) completes row 2, while the same piece at
+        // (1,1) is legal but does NOT clear that row. The cell at (1,1)
+        // is highlighted by the hint and must not promise a clear on tap.
+        loadFixture(
+            listOf(12, 11, 8),
+            occupied = (2..7).map { 8 + it }.toSet(),
+        )
+        compose.onNodeWithTag("hint-button").performClick()
+        compose.onNodeWithTag("status-message")
+            .assertTextEquals("HINT: row 1, column 1 (+83)")
+        compose.onNodeWithTag("board-cell-1-1").assertIsEnabled()
+            .assertContentDescriptionEquals(
+                "Row 2, column 2: place selected shape",
+            )
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("board-cell-1-1").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("3")
+        // Confirm that the mistaken previewed line was NOT cleared.
+        compose.onNodeWithTag("board-cell-1-2").assertContentDescriptionEquals(
+            "Row 2, column 3: occupied",
         )
     }
 
