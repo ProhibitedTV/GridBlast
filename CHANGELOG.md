@@ -6,6 +6,8 @@ All notable GridBlast changes are summarized here.
 
 - Updated verified Gradle wrapper distribution to 9.8.2 using independently cross-checked official SHA-256 checksums (wrapper JAR remains unchanged).
 
+- Reduced HINT work by reusing its placement analysis instead of replaying each possible move and refilling a simulated tray; preserved survival priorities and tie-breaking with seeded equivalence tests.
+
 - HINT now looks one move ahead and prefers a placement that keeps the round alive over an immediately terminal high score; ties remain deterministic, and forced-loss positions still get a hint.
 
 - Updated Android Gradle Plugin 9.4.1, Kotlin Compose compiler 2.4.21 and Compose BOM 2026.09.00 together, validated against the Gradle 9.8.1 toolchain and Android emulator matrix.
