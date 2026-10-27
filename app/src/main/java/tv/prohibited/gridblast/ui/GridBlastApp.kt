@@ -74,6 +74,7 @@ import tv.prohibited.gridblast.game.GameState
 import tv.prohibited.gridblast.game.GameStateCodec
 import tv.prohibited.gridblast.game.MoveHint
 import tv.prohibited.gridblast.game.Piece
+import tv.prohibited.gridblast.game.spokenGeometry
 
 private val backgroundColor = Color(0xFF10172A)
 private val panelColor = Color(0xFF202A44)
@@ -674,8 +675,10 @@ private fun TrayPiece(
             .semantics {
                 contentDescription = when {
                     piece == null -> "Empty shape slot"
-                    selected -> "Selected shape ${slot + 1}, ${piece.cells.size} blocks. Tap an available board cell to place."
-                    else -> "Select shape ${slot + 1}, ${piece.cells.size} blocks, or drag onto the board"
+                    selected -> "Selected shape ${slot + 1}, ${piece.cells.size} blocks. " +
+                        "Shape: ${piece.spokenGeometry()}. Tap an available board cell to place."
+                    else -> "Select shape ${slot + 1}, ${piece.cells.size} blocks. " +
+                        "Shape: ${piece.spokenGeometry()}. Tap to select or drag onto the board"
                 }
             },
         contentAlignment = Alignment.Center,
