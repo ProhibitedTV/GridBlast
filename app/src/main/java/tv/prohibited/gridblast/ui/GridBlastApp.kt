@@ -207,6 +207,7 @@ fun GridBlastApp() {
         activeDrag = null
         flashCells = emptySet()
         clearMessage = ""
+        invalidDropMessage = ""
         persist(history)
     }
 
