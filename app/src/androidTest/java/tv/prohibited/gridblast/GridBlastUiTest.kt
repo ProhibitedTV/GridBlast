@@ -71,7 +71,7 @@ class GridBlastUiTest {
         compose.onNodeWithTag("best-score-value").assertTextEquals("1")
         compose.onNodeWithTag("undo-button").assertIsNotEnabled()
         compose.onNodeWithTag("tray-slot-0")
-            .assertContentDescriptionEquals("Select shape 1, 1 blocks, or drag onto the board")
+            .assertContentDescriptionEquals("Select shape 1, 1 blocks. Shape: 1 row by 1 column; row 1: column 1. Tap to select or drag onto the board")
         compose.onNodeWithTag("tray-slot-0").performClick()
         compose.onNodeWithTag("board-cell-1-1").assertIsEnabled().performClick()
         compose.onNodeWithTag("score-value").assertTextEquals("1")
@@ -119,7 +119,7 @@ class GridBlastUiTest {
         compose.onNodeWithTag("score-value").assertTextEquals("0")
         compose.onNodeWithTag("undo-button").assertIsNotEnabled()
         compose.onNodeWithTag("tray-slot-0")
-            .assertContentDescriptionEquals("Select shape 1, 1 blocks, or drag onto the board")
+            .assertContentDescriptionEquals("Select shape 1, 1 blocks. Shape: 1 row by 1 column; row 1: column 1. Tap to select or drag onto the board")
     }
 
     @Test
@@ -360,12 +360,30 @@ class GridBlastUiTest {
         compose.onNodeWithTag("score-value").assertTextEquals("0")
         compose.onNodeWithTag("undo-button").assertIsNotEnabled()
         compose.onNodeWithTag("tray-slot-0").assertContentDescriptionEquals(
-            "Selected shape 1, 1 blocks. Tap an available board cell to place.",
+            "Selected shape 1, 1 blocks. Shape: 1 row by 1 column; row 1: column 1. Tap an available board cell to place.",
         )
         compose.onNodeWithTag("board-cell-0-0").performClick()
         compose.onNodeWithTag("score-value").assertTextEquals("1")
         compose.onNodeWithTag("tray-slot-0").assertContentDescriptionEquals(
             "Empty shape slot",
+        )
+    }
+
+    @Test
+    fun trayAnnouncesMirroredShapesDifferentlyForTalkBack() {
+        loadFixture(listOf(12, 13, 11))
+        compose.onNodeWithTag("tray-slot-0").assertContentDescriptionEquals(
+            "Select shape 1, 3 blocks. Shape: 2 rows by 2 columns; " +
+                "row 1: column 1; row 2: columns 1, 2. Tap to select or drag onto the board",
+        )
+        compose.onNodeWithTag("tray-slot-1").assertContentDescriptionEquals(
+            "Select shape 2, 3 blocks. Shape: 2 rows by 2 columns; " +
+                "row 1: column 2; row 2: columns 1, 2. Tap to select or drag onto the board",
+        )
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("tray-slot-0").assertContentDescriptionEquals(
+            "Selected shape 1, 3 blocks. Shape: 2 rows by 2 columns; " +
+                "row 1: column 1; row 2: columns 1, 2. Tap an available board cell to place.",
         )
     }
 
