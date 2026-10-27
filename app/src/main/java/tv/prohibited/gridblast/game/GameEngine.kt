@@ -153,9 +153,9 @@ object GameEngine {
      * legal move loses, still offer the best available placement. Within each
      * category, prefer points, then lines cleared, then stable slot/row/column.
      *
-     * Simulate with a private seeded RNG so a hint uses the same refill and
-     * game-over rules as a real turn without spending gameplay randomness or
-     * mutating the player's session. This is only a one-move lookahead.
+     * Reuse the placement analysis to check next-turn legality without
+     * placing the piece twice, drawing a tray or consuming gameplay RNG.
+     * This is only a one-move lookahead.
      */
     fun suggestMove(state: GameState): MoveHint? {
         if (state.gameOver) return null
@@ -173,7 +173,15 @@ object GameEngine {
                         points = analysis.points,
                         linesCleared = analysis.linesCleared,
                     )
-                    val survives = !place(state, slot, row, col, Random(0)).gameOver
+                    // Once a safe hint is found, lower-scoring or equal
+                    // candidates cannot improve it regardless of survival.
+                    if (bestSurvives && best != null &&
+                        (candidate.points < best.points ||
+                            (candidate.points == best.points &&
+                                candidate.linesCleared <= best.linesCleared))
+                    ) continue
+
+                    val survives = survivesAfterPlacement(state, slot, analysis)
                     // If the only way to stay alive scores fewer points, favor
                     // survival. Forced-loss hints remain available.
                     if (best == null || (survives && !bestSurvives) ||
@@ -188,6 +196,28 @@ object GameEngine {
             }
         }
         return best
+    }
+
+    /**
+     * Check whether any piece will be playable after this placement. Uses the
+     * already calculated placement/clearing result; never modifies game state.
+     * If the tray is exhausted, refillTray guarantees a playable shape when
+     * any empty cell exists, because the one-cell shape is always available.
+     */
+    private fun survivesAfterPlacement(
+        state: GameState,
+        slot: Int,
+        analysis: PlacementAnalysis,
+    ): Boolean {
+        val piece = state.tray[slot] ?: return false
+        val board = state.board.toMutableList()
+        analysis.placedIndices.forEach { board[it] = piece.colorId }
+        analysis.clearedIndices.forEach { board[it] = 0 }
+
+        val remaining = state.tray.toMutableList()
+        remaining[slot] = null
+        if (remaining.none { it != null }) return board.any { it == 0 }
+        return hasAnyMove(GameState(board = board, tray = remaining))
     }
 
     /** Invalid moves leave the board and tray untouched. */
