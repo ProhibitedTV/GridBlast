@@ -235,6 +235,12 @@ fun GridBlastApp() {
     val previewAnchor = dragAnchor ?: suggestedMove?.let { Cell(it.row, it.col) }
     val validPreview = previewAnchor != null && previewPiece != null &&
         GameEngine.canPlace(game.board, previewPiece, previewAnchor.row, previewAnchor.col)
+    // Preview completed lines before a drag is released or a hinted move is confirmed.
+    // Use the same placement analysis that the game uses to award points.
+    val previewSlot = activeDrag?.slot ?: suggestedMove?.slot
+    val previewAnalysis = if (validPreview && previewSlot != null && previewAnchor != null) {
+        GameEngine.analyze(game, previewSlot, previewAnchor.row, previewAnchor.col)
+    } else null
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -306,6 +312,7 @@ fun GridBlastApp() {
                         Board(
                             board = game.board,
                             previewPiece = previewPiece,
+                            previewClears = previewAnalysis?.clearedIndices ?: emptySet(),
                             selectedPiece = game.tray.getOrNull(selectedSlot),
                             previewCell = previewAnchor,
                             validPreview = validPreview,
@@ -330,6 +337,11 @@ fun GridBlastApp() {
                                 suggestedMove != null ->
                                     "HINT: row ${suggestedMove!!.row + 1}, column ${suggestedMove!!.col + 1} (+${suggestedMove!!.points})"
                                 clearMessage.isNotEmpty() -> clearMessage
+                                activeDrag != null && previewAnalysis != null &&
+                                    previewAnalysis.linesCleared > 0 ->
+                                    "Release to clear ${previewAnalysis.linesCleared} " +
+                                        (if (previewAnalysis.linesCleared == 1) "line" else "lines") +
+                                        " (+${previewAnalysis.points})"
                                 activeDrag != null -> "Drop your shape onto the board"
                                 selectedSlot >= 0 -> "Tap a cell to place, or drag your shape"
                                 else -> "Drag a shape to the board, or tap to select"
@@ -516,6 +528,7 @@ private fun ScorePanel(label: String, value: Int, modifier: Modifier = Modifier)
 private fun Board(
     board: List<Int>,
     previewPiece: Piece?,
+    previewClears: Set<Int>,
     selectedPiece: Piece?,
     previewCell: Cell?,
     validPreview: Boolean,
@@ -539,8 +552,10 @@ private fun Board(
                 repeat(GameEngine.SIZE) { col ->
                     val id = board[row * GameEngine.SIZE + col]
                     val isPreview = Cell(row, col) in previewCells
+                    val willClear = row * GameEngine.SIZE + col in previewClears
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
+                        willClear -> highlightColor.copy(alpha = 0.92f)
                         isPreview && validPreview -> pieceColor(previewPiece!!.colorId).copy(alpha = 0.72f)
                         row * GameEngine.SIZE + col in flashCells ->
                             lerp(emptyCellColor, highlightColor, flashAlpha)
@@ -560,8 +575,12 @@ private fun Board(
                             .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
                                 contentDescription = when {
+                                    placeable && willClear ->
+                                        "Row ${row + 1}, column ${col + 1}: place selected shape and clear completed lines"
                                     placeable ->
                                         "Row ${row + 1}, column ${col + 1}: place selected shape"
+                                    willClear ->
+                                        "Row ${row + 1}, column ${col + 1}: will clear on placement"
                                     selectedPiece != null ->
                                         "Row ${row + 1}, column ${col + 1}: shape does not fit"
                                     id == 0 -> "Row ${row + 1}, column ${col + 1}: empty"
