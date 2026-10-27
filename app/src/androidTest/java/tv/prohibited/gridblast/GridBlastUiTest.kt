@@ -196,6 +196,26 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun hintedLineClearPreviewsTheCellsAndAccessiblePlacement() {
+        loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("hint-button").performClick()
+        // A hinted row clear highlights both the existing cells and the final
+        // placement. The descriptions help screen-reader players anticipate it.
+        compose.onNodeWithTag("board-cell-0-0").assertContentDescriptionEquals(
+            "Row 1, column 1: will clear on placement",
+        )
+        compose.onNodeWithTag("board-cell-0-7").assertContentDescriptionEquals(
+            "Row 1, column 8: place selected shape and clear completed lines",
+        )
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("place-hint-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("81")
+        compose.onNodeWithTag("board-cell-0-0").assertContentDescriptionEquals(
+            "Row 1, column 1: empty",
+        )
+    }
+
+    @Test
     fun hintDoesNotPersistOrAlterBoardWhenActivityRestarts() {
         loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
         compose.onNodeWithTag("hint-button").performClick()
