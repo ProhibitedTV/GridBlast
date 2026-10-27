@@ -553,6 +553,7 @@ private fun Board(
                     val id = board[row * GameEngine.SIZE + col]
                     val isPreview = Cell(row, col) in previewCells
                     val willClear = row * GameEngine.SIZE + col in previewClears
+                    val isPreviewAnchor = previewCell?.row == row && previewCell.col == col
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
                         willClear -> highlightColor.copy(alpha = 0.92f)
@@ -575,12 +576,14 @@ private fun Board(
                             .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
                                 contentDescription = when {
-                                    placeable && willClear ->
+                                    placeable && isPreviewAnchor && previewClears.isNotEmpty() ->
                                         "Row ${row + 1}, column ${col + 1}: place selected shape and clear completed lines"
                                     placeable ->
+                                        // This action uses its OWN row/column, not the preview
+                                        // anchor. A highlight elsewhere must not promise a clear.
                                         "Row ${row + 1}, column ${col + 1}: place selected shape"
                                     willClear ->
-                                        "Row ${row + 1}, column ${col + 1}: will clear on placement"
+                                        "Row ${row + 1}, column ${col + 1}: will clear if preview is confirmed"
                                     selectedPiece != null ->
                                         "Row ${row + 1}, column ${col + 1}: shape does not fit"
                                     id == 0 -> "Row ${row + 1}, column ${col + 1}: empty"
