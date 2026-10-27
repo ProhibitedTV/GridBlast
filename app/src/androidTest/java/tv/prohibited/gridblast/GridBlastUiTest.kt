@@ -343,6 +343,33 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun invalidDropKeepsShapeAndExplainsWhatHappened() {
+        loadFixture(listOf(0, 9, 1))
+        // Swipe within the tray itself: the lifted preview never reaches the board.
+        compose.onNodeWithTag("tray-slot-0").performTouchInput {
+            swipe(
+                start = center,
+                end = Offset(center.x, size.height * 0.95f),
+                durationMillis = 700,
+            )
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "That shape won't fit there. Try another spot.",
+        )
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("tray-slot-0").assertContentDescriptionEquals(
+            "Selected shape 1, 1 blocks. Tap an available board cell to place.",
+        )
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("tray-slot-0").assertContentDescriptionEquals(
+            "Empty shape slot",
+        )
+    }
+
+    @Test
     fun draggingCenteredPiecePlacesItOnBoard() {
         val trayBounds = compose.onNodeWithTag("tray-slot-0").getUnclippedBoundsInRoot()
         val boardBounds = compose.onNodeWithTag("game-board").getUnclippedBoundsInRoot()
