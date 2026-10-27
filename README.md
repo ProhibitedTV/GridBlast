@@ -17,7 +17,7 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 
 ## Accessibility
 
-Every tray piece is selectable by tap, switch access or screen reader. Once a shape is selected, legal board locations are marked as actionable; illegal placements cannot be activated. **HINT → PLACE** offers a shorter, two-action route to a recommended move without navigating the entire board. Undo, New Game and Options are ordinary accessible buttons. Please report real-device TalkBack problems in [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5); automated semantic tests are not a substitute for human evaluation.
+Every tray piece is selectable by tap, switch access or screen reader. **TalkBack announces each shape's dimensions and occupied columns row by row**, so pieces with the same block count can be distinguished without relying on color or sight. Once a shape is selected, legal board locations are marked as actionable; illegal placements cannot be activated. **HINT → PLACE** offers a shorter, two-action route to a recommended move without navigating the entire board. Undo, New Game and Options are ordinary accessible buttons. Please report real-device TalkBack problems in [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5); automated semantic tests are not a substitute for human evaluation.
 
 ## Build from a clean checkout
 
