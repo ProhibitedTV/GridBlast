@@ -38,7 +38,7 @@ jobs:
       - name: Verify manifest security and local-data protection
         run: python3 scripts/verify-android-manifest.py
       - name: Test and build debug APK, unsigned release APK and bundle
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin :app:assembleDebug :app:assembleRelease :app:bundleRelease
       - name: Verify debug and release APK targets, permissions and native libraries
         run: |
           bash scripts/verify-apk-security.sh debug app/build/outputs/apk/debug/app-debug.apk
