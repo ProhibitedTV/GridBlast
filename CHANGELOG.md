@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Highlight rows and columns that will clear before a drag is released or a hinted move is confirmed; announce the preview in board accessibility labels and show prospective drag-clear points without spending them.
+
 - Reduced HINT work by reusing its placement analysis instead of replaying each possible move and refilling a simulated tray; preserved survival priorities and tie-breaking with seeded equivalence tests.
 
 - HINT now looks one move ahead and prefers a placement that keeps the round alive over an immediately terminal high score; ties remain deterministic, and forced-loss positions still get a hint.
