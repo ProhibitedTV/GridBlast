@@ -349,7 +349,7 @@ class GridBlastUiTest {
         compose.onNodeWithTag("tray-slot-0").performTouchInput {
             swipe(
                 start = center,
-                end = Offset(center.x, size.height * 0.95f),
+                end = Offset(center.x, center.y * 1.9f),
                 durationMillis = 700,
             )
         }
