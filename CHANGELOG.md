@@ -6,6 +6,8 @@ All notable GridBlast changes are summarized here.
 
 - Improved tray accessibility: screen readers now announce exact block geometry, including dimensions and occupied columns per row; horizontal/vertical and mirrored shapes are distinguishable without vision.
 
+- Updated SHA-pinned GitHub Actions toolchain in all four CI/release workflows: checkout v7.0.1, Java setup v6.1.0, Gradle setup v6.4.0, artifact upload v7.0.2 (no production signing secrets changed).
+
 - Explain invalid drag-and-drop attempts with a brief accessible message while retaining the selected piece, score and Undo checkpoint for retry. Compile Android instrumentation tests in the fast CI build gate to catch test code regressions before emulator launch.
 
 - Highlight rows and columns that will clear before a drag is released or a hinted move is confirmed; announce the preview in board accessibility labels and show prospective drag-clear points without spending them.
