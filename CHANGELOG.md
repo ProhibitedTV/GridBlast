@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Highlight rows and columns that will clear before a drag is released or a hinted move is confirmed; announce the preview in board accessibility labels and show prospective drag-clear points without spending them.
+
 - Updated verified Gradle wrapper distribution to 9.8.2 using independently cross-checked official SHA-256 checksums (wrapper JAR remains unchanged).
 
 - Reduced HINT work by reusing its placement analysis instead of replaying each possible move and refilling a simulated tray; preserved survival priorities and tie-breaking with seeded equivalence tests.
