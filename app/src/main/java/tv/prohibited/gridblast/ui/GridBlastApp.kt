@@ -146,6 +146,8 @@ fun GridBlastApp() {
     var flashCells by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var clearMessage by remember { mutableStateOf("") }
     var clearSequence by remember { mutableIntStateOf(0) }
+    var invalidDropMessage by remember { mutableStateOf("") }
+    var invalidDropSequence by remember { mutableIntStateOf(0) }
     val clearFlash = remember { Animatable(0f) }
 
     LaunchedEffect(clearSequence, motionEnabled) {
@@ -162,6 +164,15 @@ fun GridBlastApp() {
         if (clearSequence > 0) {
             delay(1000)
             clearMessage = ""
+        }
+    }
+
+    // Invalid drops never consume pieces, but players should know why a drag failed.
+    // A new failure restarts this brief announcement instead of persisting it.
+    LaunchedEffect(invalidDropSequence) {
+        if (invalidDropSequence > 0) {
+            delay(1800)
+            invalidDropMessage = ""
         }
     }
 
@@ -184,6 +195,7 @@ fun GridBlastApp() {
         confirmRestart = false
         flashCells = emptySet()
         clearMessage = ""
+        invalidDropMessage = ""
         persist(history)
     }
 
@@ -206,6 +218,7 @@ fun GridBlastApp() {
             selectedSlot = -1
             suggestedMove = null
             activeDrag = null
+            invalidDropMessage = ""
             persist(updated)
             if (analysis.linesCleared > 0) {
                 flashCells = if (motionEnabled) analysis.clearedIndices else emptySet()
@@ -337,6 +350,7 @@ fun GridBlastApp() {
                                 suggestedMove != null ->
                                     "HINT: row ${suggestedMove!!.row + 1}, column ${suggestedMove!!.col + 1} (+${suggestedMove!!.points})"
                                 clearMessage.isNotEmpty() -> clearMessage
+                                invalidDropMessage.isNotEmpty() -> invalidDropMessage
                                 activeDrag != null && previewAnalysis != null &&
                                     previewAnalysis.linesCleared > 0 ->
                                     "Release to clear ${previewAnalysis.linesCleared} " +
@@ -418,16 +432,27 @@ fun GridBlastApp() {
                                 modifier = Modifier.weight(1f),
                                 onSelect = {
                                     suggestedMove = null
+                                    invalidDropMessage = ""
                                     selectedSlot = if (selectedSlot == slot) -1 else slot
                                 },
                                 onDragPoint = { point ->
                                     suggestedMove = null
+                                    invalidDropMessage = ""
                                     selectedSlot = slot
                                     activeDrag = ActiveDrag(slot, point)
                                 },
                                 onDrop = { point ->
                                     val target = dragTarget(slot, point)
-                                    if (target != null) place(slot, target.row, target.col)
+                                    if (target != null && piece != null &&
+                                        GameEngine.canPlace(game.board, piece, target.row, target.col)
+                                    ) {
+                                        place(slot, target.row, target.col)
+                                    } else {
+                                        // Keep the selected piece for immediate retry.
+                                        clearMessage = ""
+                                        invalidDropMessage = "That shape won't fit there. Try another spot."
+                                        invalidDropSequence++
+                                    }
                                     activeDrag = null
                                 },
                                 onCancel = { activeDrag = null },
