@@ -171,7 +171,8 @@ fun GridBlastApp() {
     // A new failure restarts this brief announcement instead of persisting it.
     LaunchedEffect(invalidDropSequence) {
         if (invalidDropSequence > 0) {
-            delay(1800)
+            // Give TalkBack time to announce the full message on slower devices.
+            delay(3200)
             invalidDropMessage = ""
         }
     }
