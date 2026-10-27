@@ -553,7 +553,7 @@ private fun Board(
                     val id = board[row * GameEngine.SIZE + col]
                     val isPreview = Cell(row, col) in previewCells
                     val willClear = row * GameEngine.SIZE + col in previewClears
-                    val isPreviewAnchor = previewCell?.row == row && previewCell.col == col
+                    val isPreviewAnchor = previewCell != null && previewCell.row == row && previewCell.col == col
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
                         willClear -> highlightColor.copy(alpha = 0.92f)
