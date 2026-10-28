@@ -3,6 +3,7 @@ package tv.prohibited.gridblast
 import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsNotEnabled
