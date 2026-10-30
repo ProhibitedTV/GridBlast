@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Validate restored one-step Undo checkpoints against actual placement rules, line clears, score changes and tray consumption. Corrupt or stale Undo data is discarded while the current game is preserved; full random-tray refills remain supported.
+
 - Outline legal tap-to-place board anchors when a shape is selected; remove outlines during drag/hint overlays and after placement, while announcing the visual cue through TalkBack semantics.
 
 - Improved tray accessibility: screen readers now announce exact block geometry, including dimensions and occupied columns per row; horizontal/vertical and mirrored shapes are distinguishable without vision.
