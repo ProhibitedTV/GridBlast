@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Outline legal tap-to-place board anchors when a shape is selected; remove outlines during drag/hint overlays and after placement, while announcing the visual cue through TalkBack semantics.
+
 - Improved tray accessibility: screen readers now announce exact block geometry, including dimensions and occupied columns per row; horizontal/vertical and mirrored shapes are distinguishable without vision.
 
 - Updated SHA-pinned GitHub Actions toolchain in all four CI/release workflows: checkout v7.0.1, Java setup v6.1.0, Gradle setup v6.4.0, artifact upload v7.0.2 (no production signing secrets changed).

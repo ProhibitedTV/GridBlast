@@ -2,6 +2,8 @@ package tv.prohibited.gridblast
 
 import android.content.Context
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -19,6 +21,8 @@ import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -137,6 +141,38 @@ class GridBlastUiTest {
         assertTrue("hint must fit on screen", hint.right <= root.right)
         assertTrue("board must fit in viewport", board.left >= root.left && board.right <= root.right)
         assertTrue("tray must fit in viewport", tray.right <= root.right && tray.bottom <= root.bottom)
+    }
+
+    @Test
+    fun selectedPieceOutlinesOnlyLegalTapAnchorsAndClearsAfterPlacement() {
+        // The square fits at (0,0), but not at (1,1), which overlaps a block.
+        loadFixture(listOf(9, 0, 1), occupied = setOf(2 * 8 + 2))
+        val legal = compose.onNodeWithTag("board-cell-0-0")
+        val blocked = compose.onNodeWithTag("board-cell-1-1")
+        assertNull(legal.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "Tap an outlined cell to place, or drag your shape",
+        )
+        legal.assertIsEnabled().assertContentDescriptionEquals(
+            "Row 1, column 1: place selected shape",
+        )
+        assertEquals(
+            "Outlined legal placement target",
+            legal.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription),
+        )
+        blocked.assertIsNotEnabled().assertContentDescriptionEquals(
+            "Row 2, column 2: shape does not fit",
+        )
+        assertNull(blocked.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription))
+        // Deselecting must remove all tap-placement outlines without moving.
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        legal.assertIsNotEnabled()
+        assertNull(legal.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        legal.performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("4")
+        assertNull(legal.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription))
     }
 
     @Test

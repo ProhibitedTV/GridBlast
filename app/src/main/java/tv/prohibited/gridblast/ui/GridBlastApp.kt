@@ -56,6 +56,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -330,6 +331,9 @@ fun GridBlastApp() {
                             previewPiece = previewPiece,
                             previewClears = previewAnalysis?.clearedIndices ?: emptySet(),
                             selectedPiece = game.tray.getOrNull(selectedSlot),
+                            // Outlines are tap affordances, not drag/hint overlays.
+                            showLegalAnchors = selectedSlot >= 0 && activeDrag == null &&
+                                suggestedMove == null && !game.gameOver,
                             previewCell = previewAnchor,
                             validPreview = validPreview,
                             flashCells = flashCells,
@@ -360,7 +364,7 @@ fun GridBlastApp() {
                                         (if (previewAnalysis.linesCleared == 1) "line" else "lines") +
                                         " (+${previewAnalysis.points})"
                                 activeDrag != null -> "Drop your shape onto the board"
-                                selectedSlot >= 0 -> "Tap a cell to place, or drag your shape"
+                                selectedSlot >= 0 -> "Tap an outlined cell to place, or drag your shape"
                                 else -> "Drag a shape to the board, or tap to select"
                             },
                             color = Color(0xFFCAD5E8),
@@ -558,6 +562,7 @@ private fun Board(
     previewPiece: Piece?,
     previewClears: Set<Int>,
     selectedPiece: Piece?,
+    showLegalAnchors: Boolean,
     previewCell: Cell?,
     validPreview: Boolean,
     flashCells: Set<Int>,
@@ -582,6 +587,9 @@ private fun Board(
                     val isPreview = Cell(row, col) in previewCells
                     val willClear = row * GameEngine.SIZE + col in previewClears
                     val isPreviewAnchor = previewCell != null && previewCell.row == row && previewCell.col == col
+                    val placeable = selectedPiece != null &&
+                        GameEngine.canPlace(board, selectedPiece, row, col)
+                    val outlinedAnchor = showLegalAnchors && placeable
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
                         willClear -> highlightColor.copy(alpha = 0.92f)
@@ -589,10 +597,9 @@ private fun Board(
                         row * GameEngine.SIZE + col in flashCells ->
                             lerp(emptyCellColor, highlightColor, flashAlpha)
                         id != 0 -> pieceColor(id)
+                        outlinedAnchor -> lerp(emptyCellColor, highlightColor, 0.14f)
                         else -> emptyCellColor
                     }
-                    val placeable = selectedPiece != null &&
-                        GameEngine.canPlace(board, selectedPiece, row, col)
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -600,9 +607,15 @@ private fun Board(
                             .padding(2.dp)
                             .clip(RoundedCornerShape(5.dp))
                             .background(fill)
+                            .border(
+                                1.dp,
+                                if (outlinedAnchor) highlightColor.copy(alpha = 0.70f) else Color.Transparent,
+                                RoundedCornerShape(5.dp),
+                            )
                             .testTag("board-cell-$row-$col")
                             .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
+                                if (outlinedAnchor) stateDescription = "Outlined legal placement target"
                                 contentDescription = when {
                                     placeable && isPreviewAnchor && previewClears.isNotEmpty() ->
                                         "Row ${row + 1}, column ${col + 1}: place selected shape and clear completed lines"
