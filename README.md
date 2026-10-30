@@ -9,6 +9,7 @@ Place shapes on an 8×8 grid. Fill a row or column to clear it and score more po
 - **Drag a piece** from the tray onto the grid. The lifted piece and board preview share the same placement anchor; red means it won't fit. Completed lines glow before you release a valid move, and the status text previews the clear and points. Invalid drops show a brief explanation without using up the piece.
 - Alternatively, **tap a piece**: valid top-left placement cells get a subtle teal outline. Tap one of these anchors to place it, or tap the selected piece again to deselect. Outlines disappear while dragging, using a HINT preview, or after placing a piece.
 - Your current round, most recent undo checkpoint, and best score save automatically on the device.
+- **Options → HOW TO PLAY** opens an offline, scrollable rules and controls guide; returning to the game does not reset the round.
 - **New Game** asks for confirmation when you've scored points.
 - Cleared cells briefly flash and the earned points are displayed.
 - **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default.
