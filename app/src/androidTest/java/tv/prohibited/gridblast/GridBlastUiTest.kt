@@ -336,6 +336,31 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun offlineHowToPlayGuideKeepsCurrentRoundAndUndo() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
+
+        compose.onNodeWithTag("options-button").performClick()
+        compose.onNodeWithTag("how-to-play-button").performClick()
+        compose.onNodeWithText("How to play").assertExists()
+        compose.onNodeWithText("Fill rows or columns").assertExists()
+        compose.onNodeWithText("Hint and Undo").assertExists()
+        compose.onNodeWithTag("how-to-play-back-button").performClick()
+        compose.onNodeWithTag("sound-switch").assertExists()
+        compose.onNodeWithTag("privacy-button").performClick()
+        compose.onNodeWithText("Privacy policy").assertExists()
+        compose.onNodeWithTag("privacy-back-button").performClick()
+        compose.onNodeWithTag("options-done-button").performClick()
+
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
     fun privacyPolicyIsReadableOfflineFromOptions() {
         compose.onNodeWithTag("options-button").performClick()
         compose.onNodeWithTag("privacy-button").performClick()
