@@ -220,6 +220,14 @@ object GameEngine {
         return hasAnyMove(GameState(board = board, tray = remaining))
     }
 
+    /**
+     * Scores are stored as non-negative Ints in the existing local save format.
+     * Saturation keeps marathon sessions valid instead of wrapping negative
+     * and crashing when the save codec rejects the overflowed score.
+     */
+    internal fun cappedScore(score: Int, earned: Int): Int =
+        (score.toLong() + earned.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+
     /** Invalid moves leave the board and tray untouched. */
     fun place(
         state: GameState,
@@ -240,7 +248,7 @@ object GameEngine {
         val next = GameState(
             board = board,
             tray = nextTray,
-            score = state.score + analysis.points,
+            score = cappedScore(state.score, analysis.points),
         )
         return next.copy(gameOver = !hasAnyMove(next))
     }
