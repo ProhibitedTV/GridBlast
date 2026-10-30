@@ -53,6 +53,46 @@ object GameHistoryCodec {
         return "$VERSION~$current~$previous"
     }
 
+    /**
+     * A saved Undo must represent a real, single successful placement.
+     * Merely requiring a lower previous score allows stale/mixed sessions to
+     * appear as valid checkpoints and roll the player back to another board.
+     *
+     * The reducer is deterministic except for the contents of a freshly drawn
+     * tray. For refills, validate the score, board, and full tray size; the
+     * exact randomly chosen shape IDs cannot be reconstructed from a save.
+     */
+    private fun isOneMoveSuccessor(previous: GameState, current: GameState): Boolean {
+        for (slot in previous.tray.indices) {
+            val piece = previous.tray[slot] ?: continue
+            for (row in 0 until GameEngine.SIZE) {
+                for (col in 0 until GameEngine.SIZE) {
+                    val analysis = GameEngine.analyze(previous, slot, row, col) ?: continue
+                    if (previous.score.toLong() + analysis.points != current.score.toLong()) continue
+
+                    val board = previous.board.toMutableList()
+                    analysis.placedIndices.forEach { board[it] = piece.colorId }
+                    analysis.clearedIndices.forEach { board[it] = 0 }
+                    if (board != current.board) continue
+
+                    val remaining = previous.tray.toMutableList()
+                    remaining[slot] = null
+                    if (remaining.all { it == null }) {
+                        // The third placement draws a new full tray; its random
+                        // contents cannot be reproduced without the RNG state.
+                        if (current.tray.size != GameEngine.TRAY_SIZE ||
+                            current.tray.any { it == null }
+                        ) continue
+                    } else if (current.tray != remaining) {
+                        continue
+                    }
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     fun decode(raw: String?): GameHistory? {
         if (raw.isNullOrEmpty() || raw.length > MAX_LENGTH) return null
         val fields = raw.split("~")
@@ -65,7 +105,8 @@ object GameHistoryCodec {
         }
         // Treat invalid/stale undo history as no undo, never discard a valid game.
         if (previous != null &&
-            (previous.gameOver || previous.score >= current.score)
+            (previous.gameOver || previous.score >= current.score ||
+                !isOneMoveSuccessor(previous, current))
         ) return GameHistory(current)
         return GameHistory(current, previous)
     }
