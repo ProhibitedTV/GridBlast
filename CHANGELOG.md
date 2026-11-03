@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Auto-size the full SCORE and BEST values in compact layouts so very large scores do not wrap or overlap; an Android UI regression test covers Int.MAX_VALUE, placement and Undo.
+
 - Added an offline HOW TO PLAY guide under Options, explaining scoring, drag/tap placement, hints, Undo and refills, with an Android UI navigation/state regression test.
 
 - Suppress optional sound effects while the device is in Silent/Vibrate mode or media audio is muted/at zero volume, without changing device settings. Sound resumes automatically when the system allows it; added JVM policy regression tests.
