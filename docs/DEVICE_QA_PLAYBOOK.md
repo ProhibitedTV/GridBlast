@@ -1,6 +1,6 @@
 # GridBlast physical Android QA playbook
 
-**Status: unexecuted acceptance plan.** Automated CI is valuable, but it does not establish actual touch comfort, TalkBack usability, real-device sound behavior, power consumption, or Play Store acceptance. Record **observed** results, never mark a scenario passed from code review alone. See [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5) and the [Play release gate](GOOGLE_PLAY_RELEASE_CHECKLIST.md).
+**Status: unexecuted acceptance plan.** Seeded JVM gameplay soak tests cover many simulated turns, but they cannot validate human enjoyment, real touch performance, Android process death or hardware accessibility. Automated CI is valuable, but it does not establish actual touch comfort, TalkBack usability, real-device sound behavior, power consumption, or Play Store acceptance. Record **observed** results, never mark a scenario passed from code review alone. See [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5) and the [Play release gate](GOOGLE_PLAY_RELEASE_CHECKLIST.md).
 
 ## Before starting
 
