@@ -2,6 +2,21 @@
 
 **Status: unexecuted acceptance plan.** Seeded JVM gameplay soak tests cover many simulated turns, but they cannot validate human enjoyment, real touch performance, Android process death or hardware accessibility. Automated CI is valuable, but it does not establish actual touch comfort, TalkBack usability, real-device sound behavior, power consumption, or Play Store acceptance. Record **observed** results, never mark a scenario passed from code review alone. See [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5) and the [Play release gate](GOOGLE_PLAY_RELEASE_CHECKLIST.md).
 
+## Automated Android emulator coverage
+
+The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android-emulator.yml) runs the same real Compose instrumentation tests across these *software-emulated* configurations:
+
+| Android level | Emulated viewport | Font scale | Purpose |
+| --- | --- | --- | --- |
+| API 29 / Android 10 | Standard Pixel-style phone | 1.0 | Minimum older-platform usability |
+| API 35 / Android 15 | Standard Pixel-style phone | 1.0 | Common phone baseline |
+| API 35 / Android 15 | 320×720 at 160dpi (320dp wide) | 1.0 | Small-phone clipping and gestures |
+| API 35 / Android 15 | 360×800 at 160dpi (360dp wide) | 1.4 | Enlarged text and dialog accessibility |
+| API 36 / Android 16 | Standard Pixel-style phone | 1.0 | Modern platform/target-SDK regression |
+| API 36 / Android 16 | 600×960 at 160dpi (600dp wide) | 1.15 | Tablet-sized portrait layout |
+
+Changing an emulator's resolution/density is **not** equivalent to physical tablet hardware or a particular vendor's phone. This matrix can detect many startup, Compose layout, input, and persistence regressions, but it cannot validate thermal behavior, ergonomics, real audio routing, TalkBack speech usability, screen brightness, battery life, or store acceptance. An emulator report passes only when all jobs finish successfully.
+
 ## Before starting
 
 Use an installable APK from a successful [Android CI](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android.yml) run on `main`, or a locally built debug APK. Capture the exact Git commit SHA and APK filename; avoid testing an unknown older build. For the signed-release gate, separately test the owner-signed release APK rather than treating debug QA as equivalent. Never publish production keystores, passwords, contacts, or private device logs.
