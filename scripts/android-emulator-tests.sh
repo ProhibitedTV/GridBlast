@@ -59,7 +59,7 @@ from pathlib import Path
 path = Path(sys.argv[1])
 data = path.read_bytes()
 assert len(data) > 1000, "Empty/incomplete emulator screenshot"
-assert data[:8] == b"\\x89PNG\\r\\n\\x1a\\n".decode("unicode_escape").encode("latin1"), "Invalid PNG signature"
+assert data[:8] == bytes((137, 80, 78, 71, 13, 10, 26, 10)), "Invalid PNG signature"
 width, height = struct.unpack(">II", data[16:24])
 assert width >= 320 and height >= 600, f"Unexpected screenshot geometry: {width}x{height}"
 print(f"Captured real emulator UI: {width}x{height} ({len(data)} bytes) at {path}")
