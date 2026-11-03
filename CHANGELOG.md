@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Added a repeatable seeded multi-round gameplay soak regression test covering random moves, hints, fair tray refills, scoring, one-turn Undo, persistence and game-over boundaries. Automated results do not replace hands-on device playtesting.
+
 - Auto-size the full SCORE and BEST values in compact layouts so very large scores do not wrap or overlap; an Android UI regression test covers Int.MAX_VALUE, placement and Undo.
 
 - Added an offline HOW TO PLAY guide under Options, explaining scoring, drag/tap placement, hints, Undo and refills, with an Android UI navigation/state regression test.
