@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Suppress optional sound effects while the device is in Silent/Vibrate mode or media audio is muted/at zero volume, without changing device settings. Sound resumes automatically when the system allows it; added JVM policy regression tests.
+
 - Validate restored one-step Undo checkpoints against actual placement rules, line clears, score changes and tray consumption. Corrupt or stale Undo data is discarded while the current game is preserved; full random-tray refills remain supported.
 
 - Outline legal tap-to-place board anchors when a shape is selected; remove outlines during drag/hint overlays and after placement, while announcing the visual cue through TalkBack semantics.
