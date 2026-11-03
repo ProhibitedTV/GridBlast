@@ -15,6 +15,13 @@ case "${1:-}" in
     adb shell wm size 360x800
     adb shell settings put system font_scale 1.4
     ;;
+  short-large-font-360dp)
+    # Tight 360x640 portrait viewport with enlarged Android text.
+    # Stress that options, score and tray stay reachable without clipping.
+    adb shell wm density 160
+    adb shell wm size 360x640
+    adb shell settings put system font_scale 1.3
+    ;;
   tablet-600dp)
     # Portrait tablet-sized viewport; not a substitute for real tablet input.
     adb shell wm density 160
