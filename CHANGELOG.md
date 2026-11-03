@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Added an offline HOW TO PLAY guide under Options, explaining scoring, drag/tap placement, hints, Undo and refills, with an Android UI navigation/state regression test.
+
 - Suppress optional sound effects while the device is in Silent/Vibrate mode or media audio is muted/at zero volume, without changing device settings. Sound resumes automatically when the system allows it; added JVM policy regression tests.
 
 - Validate restored one-step Undo checkpoints against actual placement rules, line clears, score changes and tray consumption. Corrupt or stale Undo data is discarded while the current game is preserved; full random-tray refills remain supported.
