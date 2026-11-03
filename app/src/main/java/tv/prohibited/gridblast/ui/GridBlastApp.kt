@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -551,8 +552,25 @@ private fun ScorePanel(label: String, value: Int, modifier: Modifier = Modifier)
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(label, fontSize = 12.sp, color = Color(0xFFA9B9D4), fontWeight = FontWeight.SemiBold)
-        Text(value.toString(), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White,
-            modifier = Modifier.testTag(if (label == "SCORE") "score-value" else "best-score-value"))
+        // Keep the exact score legible on narrow screens and at Int.MAX_VALUE.
+        // Auto-size only this number; a fixed 28sp value may wrap or overlap BEST.
+        Text(
+            text = value.toString(),
+            fontSize = 28.sp,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 12.sp,
+                maxFontSize = 28.sp,
+                stepSize = 1.sp,
+            ),
+            maxLines = 1,
+            softWrap = false,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(if (label == "SCORE") "score-value" else "best-score-value"),
+        )
     }
 }
 
