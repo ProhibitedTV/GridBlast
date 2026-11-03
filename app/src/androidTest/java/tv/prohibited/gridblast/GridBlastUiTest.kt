@@ -50,10 +50,15 @@ class GridBlastUiTest {
     }
 
     /** Load a known legal board to test edges without relying on random pieces. */
-    private fun loadFixture(shapeIds: List<Int>, occupied: Set<Int> = emptySet()) {
+    private fun loadFixture(
+        shapeIds: List<Int>,
+        occupied: Set<Int> = emptySet(),
+        score: Int = 0,
+    ) {
         val state = GameState(
             board = List(64) { if (it in occupied) 3 else 0 },
             tray = shapeIds.map { GameEngine.pieceFromId(it) },
+            score = score,
         )
         compose.activityRule.scenario.onActivity {
             it.getSharedPreferences("gridblast", Context.MODE_PRIVATE)
@@ -141,6 +146,30 @@ class GridBlastUiTest {
         assertTrue("hint must fit on screen", hint.right <= root.right)
         assertTrue("board must fit in viewport", board.left >= root.left && board.right <= root.right)
         assertTrue("tray must fit in viewport", tray.right <= root.right && tray.bottom <= root.bottom)
+    }
+
+    @Test
+    fun maximumScoreIsFullyShownOnNarrowScreensAndRemainsPlayable() {
+        loadFixture(listOf(0, 9, 1), score = Int.MAX_VALUE)
+        val fullScore = Int.MAX_VALUE.toString()
+        compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
+        compose.onNodeWithTag("best-score-value").assertTextEquals(fullScore)
+
+        val scoreBox = compose.onNodeWithTag("score-value").getUnclippedBoundsInRoot()
+        val bestBox = compose.onNodeWithTag("best-score-value").getUnclippedBoundsInRoot()
+        val root = compose.onRoot().getUnclippedBoundsInRoot()
+        assertTrue("score must stay inside the viewport", scoreBox.left >= root.left)
+        assertTrue("best must stay inside the viewport", bestBox.right <= root.right)
+        assertTrue("score and best cannot overlap", scoreBox.right <= bestBox.left)
+        assertTrue("score should stay on one line", scoreBox.height <= 40.dp)
+        assertTrue("best should stay on one line", bestBox.height <= 40.dp)
+
+        // The scoreboard saturates without blocking new placements or Undo.
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
     }
 
     @Test
