@@ -4,14 +4,16 @@
 
 ## Automated Android emulator coverage
 
-The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android-emulator.yml) runs the same real Compose instrumentation tests across these *software-emulated* configurations:
+The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android-emulator.yml) runs the same real Compose instrumentation tests across these *software-emulated* configurations. The suite also simulates background/foreground lifecycle transitions to check saved score and one-turn Undo:
 
 | Android level | Emulated viewport | Font scale | Purpose |
 | --- | --- | --- | --- |
-| API 29 / Android 10 | Standard Pixel-style phone | 1.0 | Minimum older-platform usability |
+| API 26 / Android 8.0 | Standard Pixel-style phone | 1.0 | Verify the declared minimum supported Android version |
+| API 29 / Android 10 | Standard Pixel-style phone | 1.0 | Older-platform usability |
 | API 35 / Android 15 | Standard Pixel-style phone | 1.0 | Common phone baseline |
 | API 35 / Android 15 | 320×720 at 160dpi (320dp wide) | 1.0 | Small-phone clipping and gestures |
 | API 35 / Android 15 | 360×800 at 160dpi (360dp wide) | 1.4 | Enlarged text and dialog accessibility |
+| API 35 / Android 15 | 360×640 at 160dpi (360dp wide) | 1.3 | Short screen + large text; fit board, controls and modal actions |
 | API 36 / Android 16 | Standard Pixel-style phone | 1.0 | Modern platform/target-SDK regression |
 | API 36 / Android 16 | 600×960 at 160dpi (600dp wide) | 1.15 | Tablet-sized portrait layout |
 
