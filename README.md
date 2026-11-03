@@ -1,5 +1,9 @@
 # GridBlast
 
+![Original GridBlast promotional artwork](docs/brand/gridblast-feature-1024x500.png)
+
+**[Install the Android alpha](docs/ALPHA_PLAYTEST.md)** · **[Send playtest feedback](https://github.com/ProhibitedTV/GridBlast/issues/new?template=alpha-playtest.yml)** · **[Launch roadmap](docs/LAUNCH_AUDIENCE_PLAN.md)**
+
 **An original, free, ad-free Android block puzzle game.** No ads, no tracking, no accounts, no subscriptions, and no network permission. Native Kotlin and Jetpack Compose.
 
 ## Play
@@ -32,7 +36,7 @@ cd GridBlast
 
 On Windows, run `gradlew.bat :app:testDebugUnitTest :app:assembleDebug`. Android Studio can open this directory as an existing project. On systems where Android SDK 37 is exposed as `android-37.0`, CI sets an `android-37` compatibility path; your local SDK may need the same symlink until tooling supports the renamed platform.
 
-**Install an alpha:** In GitHub's **Actions → Android CI → successful run**, download `GridBlast-debug`, extract `app-debug.apk`, and install it on your phone. Alternatively use the output at `app/build/outputs/apk/debug/app-debug.apk`.
+**Install an alpha:** Follow the [Android download and playtest guide](docs/ALPHA_PLAYTEST.md). Select a successful **main** Android CI run, download the `GridBlast-debug` artifact, extract `app-debug.apk`, and install it on your phone. GitHub sign-in is needed; this is a debug alpha, not a Play Store release.
 
 ## Signed release candidates
 

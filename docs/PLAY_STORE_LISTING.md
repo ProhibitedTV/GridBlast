@@ -41,7 +41,8 @@ GridBlast is an independent original game, not affiliated with another block puz
 ## Authentic listing assets still needed
 
 - At least **2 screenshots from a real running build**, readable and accurately representing the final UI
-- High-resolution original 512×512 listing icon and feature graphic as required by the current console
+- [x] Original candidate [512×512 32-bit PNG icon](brand/gridblast-icon-512x512.png) and [1024×500 24-bit PNG feature graphic](brand/gridblast-feature-1024x500.png) have been generated, not submitted.
+- [ ] Owner visually reviews draft graphics, brand rights and fidelity before Play Console submission. File format checks run with `python3 scripts/verify-store-assets.py`.
 - Optional short gameplay video from a real build
 - Avoid references to rival brands, fake reviews, badges, awards, discount claims, or misleading gameplay scenes
 
