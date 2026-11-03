@@ -17,6 +17,8 @@ The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/a
 
 Changing an emulator's resolution/density is **not** equivalent to physical tablet hardware or a particular vendor's phone. This matrix can detect many startup, Compose layout, input, and persistence regressions, but it cannot validate thermal behavior, ergonomics, real audio routing, TalkBack speech usability, screen brightness, battery life, or store acceptance. An emulator report passes only when all jobs finish successfully.
 
+After instrumented tests pass, each emulator launches a fresh installed build and records a **real screenshot of its rendered screen** in the `GridBlast-emulator-report-*` artifact. The screenshots are for manual clipping/layout review only. They are **not** proof of a physical-device test and must not be mislabeled as hardware captures or final Google Play store screenshots.
+
 ## Before starting
 
 Use an installable APK from a successful [Android CI](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android.yml) run on `main`, or a locally built debug APK. Capture the exact Git commit SHA and APK filename; avoid testing an unknown older build. For the signed-release gate, separately test the owner-signed release APK rather than treating debug QA as equivalent. Never publish production keystores, passwords, contacts, or private device logs.
