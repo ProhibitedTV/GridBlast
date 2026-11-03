@@ -326,7 +326,9 @@ fun GridBlastApp() {
                         modifier = Modifier.fillMaxWidth().weight(1f),
                         contentAlignment = Alignment.Center,
                     ) {
-                        val boardSize = minOf(maxWidth, maxHeight)
+                        // Reserve breathing room above and below the board on
+                        // height-constrained tablet/large-text layouts.
+                        val boardSize = minOf(maxWidth, (maxHeight - 16.dp).coerceAtLeast(0.dp))
                         Board(
                             board = game.board,
                             previewPiece = previewPiece,
@@ -546,6 +548,7 @@ fun GridBlastApp() {
 private fun ScorePanel(label: String, value: Int, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
+            .testTag(if (label == "SCORE") "score-panel" else "best-panel")
             .clip(RoundedCornerShape(14.dp))
             .background(panelColor)
             .padding(12.dp),
