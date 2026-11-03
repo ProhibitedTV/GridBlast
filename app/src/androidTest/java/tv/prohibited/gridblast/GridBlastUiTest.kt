@@ -142,6 +142,8 @@ class GridBlastUiTest {
         val undo = compose.onNodeWithTag("undo-button").getUnclippedBoundsInRoot()
         val status = compose.onNodeWithTag("status-message").getUnclippedBoundsInRoot()
         val board = compose.onNodeWithTag("game-board").getUnclippedBoundsInRoot()
+        val scorePanel = compose.onNodeWithTag("score-panel").getUnclippedBoundsInRoot()
+        val bestPanel = compose.onNodeWithTag("best-panel").getUnclippedBoundsInRoot()
         val tray = compose.onNodeWithTag("tray-slot-2").getUnclippedBoundsInRoot()
         assertTrue("title and options cannot overlap", title.right <= options.left)
         assertTrue("options and new game cannot overlap", options.right <= newGame.left)
@@ -150,6 +152,8 @@ class GridBlastUiTest {
         assertTrue("undo and hint cannot overlap", undo.right <= hint.left)
         assertTrue("hint must fit on screen", hint.right <= root.right)
         assertTrue("board must fit in viewport", board.left >= root.left && board.right <= root.right)
+        assertTrue("score panel and board need at least 8dp separation", board.top - scorePanel.bottom >= 8.dp)
+        assertTrue("best panel and board need at least 8dp separation", board.top - bestPanel.bottom >= 8.dp)
         assertTrue("board must remain usable with enlarged text", board.bottom - board.top >= 160.dp)
         assertTrue("tray must fit in viewport", tray.right <= root.right && tray.bottom <= root.bottom)
     }
