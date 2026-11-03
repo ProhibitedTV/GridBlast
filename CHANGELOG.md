@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Expanded emulator QA with Android 8.0 (the declared minimum supported OS) and a 360×640 short phone at 1.3× font scale; added a lifecycle background/resume regression test for board, score and Undo preservation.
+
 - Expanded the Android emulator suite to Android 16, 360dp phones at 1.4x text size, and 600dp tablet viewports. Real emulator screenshots exposed a cramped tablet layout: reserve a minimum 8dp gap above the board, with UI regressions for board/score spacing, controls, and help visibility. Real-device QA remains an independent release gate.
 
 - Added a repeatable seeded multi-round gameplay soak regression test covering random moves, hints, fair tray refills, scoring, one-turn Undo, persistence and game-over boundaries. Automated results do not replace hands-on device playtesting.
