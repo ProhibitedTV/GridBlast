@@ -161,8 +161,8 @@ class GridBlastUiTest {
         assertTrue("score must stay inside the viewport", scoreBox.left >= root.left)
         assertTrue("best must stay inside the viewport", bestBox.right <= root.right)
         assertTrue("score and best cannot overlap", scoreBox.right <= bestBox.left)
-        assertTrue("score should stay on one line", scoreBox.height <= 40.dp)
-        assertTrue("best should stay on one line", bestBox.height <= 40.dp)
+        assertTrue("score should stay on one line", scoreBox.bottom - scoreBox.top <= 40.dp)
+        assertTrue("best should stay on one line", bestBox.bottom - bestBox.top <= 40.dp)
 
         // The scoreboard saturates without blocking new placements or Undo.
         compose.onNodeWithTag("tray-slot-0").performClick()
