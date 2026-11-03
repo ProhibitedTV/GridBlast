@@ -45,7 +45,8 @@ object GameHistoryCodec {
     fun encode(history: GameHistory): String {
         val current = GameStateCodec.encode(history.current)
         val previous = history.previous?.let { previous ->
-            require(!previous.gameOver && previous.score < history.current.score) {
+            // Equal scores are valid only after the Int scoreboard has capped.
+            require(!previous.gameOver && previous.score <= history.current.score) {
                 "Undo snapshot must precede one legal placement"
             }
             GameStateCodec.encode(previous)
@@ -68,7 +69,7 @@ object GameHistoryCodec {
             for (row in 0 until GameEngine.SIZE) {
                 for (col in 0 until GameEngine.SIZE) {
                     val analysis = GameEngine.analyze(previous, slot, row, col) ?: continue
-                    if (previous.score.toLong() + analysis.points != current.score.toLong()) continue
+                    if (GameEngine.cappedScore(previous.score, analysis.points) != current.score) continue
 
                     val board = previous.board.toMutableList()
                     analysis.placedIndices.forEach { board[it] = piece.colorId }
@@ -103,9 +104,11 @@ object GameHistoryCodec {
         } else {
             GameStateCodec.decode(fields[2]) ?: return GameHistory(current)
         }
+        // Equal scores are possible at Int.MAX_VALUE. The one-move validator
+        // below checks the actual placement even when the score cannot rise.
         // Treat invalid/stale undo history as no undo, never discard a valid game.
         if (previous != null &&
-            (previous.gameOver || previous.score >= current.score ||
+            (previous.gameOver || previous.score > current.score ||
                 !isOneMoveSuccessor(previous, current))
         ) return GameHistory(current)
         return GameHistory(current, previous)
