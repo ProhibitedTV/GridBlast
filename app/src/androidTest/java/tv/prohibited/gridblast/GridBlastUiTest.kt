@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -138,14 +139,31 @@ class GridBlastUiTest {
         val options = compose.onNodeWithTag("options-button").getUnclippedBoundsInRoot()
         val newGame = compose.onNodeWithTag("new-game-button").getUnclippedBoundsInRoot()
         val hint = compose.onNodeWithTag("hint-button").getUnclippedBoundsInRoot()
+        val undo = compose.onNodeWithTag("undo-button").getUnclippedBoundsInRoot()
+        val status = compose.onNodeWithTag("status-message").getUnclippedBoundsInRoot()
         val board = compose.onNodeWithTag("game-board").getUnclippedBoundsInRoot()
         val tray = compose.onNodeWithTag("tray-slot-2").getUnclippedBoundsInRoot()
         assertTrue("title and options cannot overlap", title.right <= options.left)
         assertTrue("options and new game cannot overlap", options.right <= newGame.left)
         assertTrue("toolbar must fit on screen", newGame.right <= root.right)
+        assertTrue("status and undo cannot overlap", status.right <= undo.left)
+        assertTrue("undo and hint cannot overlap", undo.right <= hint.left)
         assertTrue("hint must fit on screen", hint.right <= root.right)
         assertTrue("board must fit in viewport", board.left >= root.left && board.right <= root.right)
+        assertTrue("board must remain usable with enlarged text", board.bottom - board.top >= 160.dp)
         assertTrue("tray must fit in viewport", tray.right <= root.right && tray.bottom <= root.bottom)
+    }
+
+    @Test
+    fun optionsAndHelpRemainUsableWithEnlargedSystemText() {
+        // The full emulator matrix runs this, including the 1.4x font profile.
+        compose.onNodeWithTag("options-button").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("how-to-play-button").assertIsDisplayed().performClick()
+        compose.onNodeWithText("How to play").assertIsDisplayed()
+        compose.onNodeWithTag("how-to-play-back-button").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("options-done-button").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("game-board").assertIsDisplayed()
+        compose.onNodeWithTag("tray-slot-2").assertIsDisplayed()
     }
 
     @Test
