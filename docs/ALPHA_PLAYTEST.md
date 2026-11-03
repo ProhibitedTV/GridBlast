@@ -24,7 +24,7 @@ Artifacts expire automatically. If the latest run has no artifact, use an earlie
 
 ## Send feedback
 
-Use the [**Alpha Playtest Feedback** GitHub issue form](https://github.com/ProhibitedTV/GridBlast/issues/new?template=alpha-playtest.yml) for bugs, usability issues and constructive suggestions. For a general discussion or to signal interest in further tests, join the [early-tester discussion](https://github.com/ProhibitedTV/GridBlast/issues?q=is%3Aissue+is%3Aopen+alpha+playtest). 
+Use the [**Alpha Playtest Feedback** GitHub issue form](https://github.com/ProhibitedTV/GridBlast/issues/new?template=alpha-playtest.yml) for bugs, usability issues and constructive suggestions. For a general discussion or to signal interest in further tests, join the [early-tester discussion](https://github.com/ProhibitedTV/GridBlast/issues/47). 
 
 Please include your **device model, Android version, APK commit/run, what you did, what you expected, and what happened** when reporting a bug. Screenshots should come from the *real running game* and contain no personal data. Do **not** post personal email addresses, phone numbers, private logs, passwords or device identifiers in public issues. A public GitHub account is needed to comment; Play Console's future closed tests will use a separate, private enrollment flow.
 
