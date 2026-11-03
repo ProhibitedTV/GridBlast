@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
@@ -102,6 +103,27 @@ class GridBlastUiTest {
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
         compose.onNodeWithTag("undo-button").assertIsNotEnabled()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
+    fun movingAppToBackgroundAndForegroundPreservesSavedTurn() {
+        // Explicit lifecycle transitions mimic an Android user switching apps,
+        // without claiming to simulate a killed OS process or physical device.
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
+
+        compose.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        compose.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        compose.waitForIdle()
+
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("tray-slot-0")
+            .assertContentDescriptionEquals("Empty shape slot")
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
         compose.onNodeWithTag("score-value").assertTextEquals("0")
     }
 
