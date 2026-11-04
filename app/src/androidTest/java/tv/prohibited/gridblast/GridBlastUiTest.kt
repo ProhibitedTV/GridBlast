@@ -1,6 +1,7 @@
 package tv.prohibited.gridblast
 
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -21,6 +22,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
@@ -406,6 +409,47 @@ class GridBlastUiTest {
         compose.onNodeWithTag("score-value").assertTextEquals(score.toString())
         compose.onNodeWithTag("tray-slot-0")
             .assertContentDescriptionEquals("Empty shape slot")
+    }
+
+    @Test
+    fun systemBackFromHelpKeepsTheCurrentGameAndUndo() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+
+        compose.onNodeWithTag("options-button").performClick()
+        compose.onNodeWithTag("how-to-play-button").performClick()
+        compose.onNodeWithText("How to play").assertExists()
+        // Send actual Android Back key events to the focused dialog window,
+        // rather than Espresso's root picker (the activity lacks focus here).
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        // UiDevice.pressBack() may return false if Compose updates content
+        // inside the same window without the window-change event UiAutomator
+        // waits for. Judge the actual visible navigation, not that return flag.
+        device.pressBack()
+        compose.waitForIdle()
+        compose.onNodeWithTag("sound-switch").assertExists()
+        device.pressBack()
+        compose.waitForIdle()
+
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
+    fun gameplayNeedsNoInternetPermission() {
+        val permission = compose.activity.packageManager.checkPermission(
+            android.Manifest.permission.INTERNET,
+            compose.activity.packageName,
+        )
+        assertEquals(PackageManager.PERMISSION_DENIED, permission)
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
     }
 
     @Test

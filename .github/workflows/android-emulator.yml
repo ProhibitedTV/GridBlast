@@ -37,6 +37,15 @@ jobs:
           # Short screen + large system text stresses vertical layout.
           - api-level: 35
             form-factor: short-large-font-360dp
+          # No radio connectivity, Android dark mode, real game controls.
+          - api-level: 35
+            form-factor: offline-dark-360dp
+          # Android's three-button navigation changes available viewport insets.
+          - api-level: 35
+            form-factor: three-button-360dp
+          # Animations enabled (most other CI profiles deliberately suppress them).
+          - api-level: 35
+            form-factor: motion-enabled-360dp
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
@@ -69,7 +78,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
-          disable-animations: true
+          disable-animations: ${{ matrix.form-factor != 'motion-enabled-360dp' }}
           script: sh scripts/android-emulator-tests.sh ${{ matrix.form-factor }}
       - name: Upload test reports
         if: always()

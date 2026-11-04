@@ -14,8 +14,13 @@ The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/a
 | API 35 / Android 15 | 320×720 at 160dpi (320dp wide) | 1.0 | Small-phone clipping and gestures |
 | API 35 / Android 15 | 360×800 at 160dpi (360dp wide) | 1.4 | Enlarged text and dialog accessibility |
 | API 35 / Android 15 | 360×640 at 160dpi (360dp wide) | 1.3 | Short screen + large text; fit board, controls and modal actions |
+| API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **Airplane mode + system dark theme**, no network entitlement |
+| API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **Three-button system navigation**, different usable insets and Back handling |
+| API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **System animations enabled**; 250 reproducible random input events |
 | API 36 / Android 16 | Standard Pixel-style phone | 1.0 | Modern platform/target-SDK regression |
 | API 36 / Android 16 | 600×960 at 160dpi (600dp wide) | 1.15 | Tablet-sized portrait layout |
+
+For each emulated profile, the smoke script also force-stops and cold-relaunches the APK and verifies that its process survives. This is **not** proof that a played round survives forced process death. Compose tests independently cover state persistence across activity recreation and background/resume. The active-motion profile adds seeded random input; it cannot establish difficulty, fairness, ergonomics or sustained user satisfaction.
 
 Changing an emulator's resolution/density is **not** equivalent to physical tablet hardware or a particular vendor's phone. This matrix can detect many startup, Compose layout, input, and persistence regressions, but it cannot validate thermal behavior, ergonomics, real audio routing, TalkBack speech usability, screen brightness, battery life, or store acceptance. An emulator report passes only when all jobs finish successfully.
 
