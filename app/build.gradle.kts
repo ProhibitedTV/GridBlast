@@ -13,6 +13,26 @@ val releaseSigningAvailable = listOf(
     storePath, storePasswordEnv, keyAliasEnv, keyPasswordEnv,
 ).all { !it.isNullOrBlank() }
 
+// Public debug builds retain the stable source default. The private, manually
+// dispatched beta channel supplies an increasing versionCode without committing
+// an owner's signing identity or rewriting source files.
+val distributionVersionCode = System.getenv("GRIDBLAST_VERSION_CODE")?.let { value ->
+    require(value.matches(Regex("[1-9][0-9]{0,9}"))) {
+        "GRIDBLAST_VERSION_CODE must be a positive decimal integer"
+    }
+    val code = value.toLong()
+    require(code <= 2_100_000_000) {
+        "GRIDBLAST_VERSION_CODE is outside the accepted Android Play version range"
+    }
+    code.toInt()
+} ?: 1
+val distributionVersionName = System.getenv("GRIDBLAST_VERSION_NAME")?.let { value ->
+    require(value.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,39}"))) {
+        "GRIDBLAST_VERSION_NAME contains unsupported characters or is too long"
+    }
+    value
+} ?: "0.1.0"
+
 android {
     namespace = "tv.prohibited.gridblast"
     compileSdk = 37
@@ -21,8 +41,8 @@ android {
         applicationId = "tv.prohibited.gridblast"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = distributionVersionCode
+        versionName = distributionVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

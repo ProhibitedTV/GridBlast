@@ -1,0 +1,131 @@
+name: Android owner-signed beta APK
+
+# Manual only. No PR, push, tag or other untrusted event may access the
+# distinct, persistent beta signing identity. A debug APK cannot provide
+# continuity between ephemeral CI runners.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gridblast-owner-beta-signing
+  cancel-in-progress: false
+
+jobs:
+  beta:
+    name: Sign verified beta with owner-controlled test certificate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Restrict distribution to reviewed main history
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" || "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Owner-signed beta is manual and main-only." >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor HEAD origin/main || {
+            echo "This commit does not belong to reviewed main history." >&2
+            exit 1
+          }
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Install Android SDK
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Provide API 37 compatibility path
+        run: |
+          if [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
+          fi
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      - name: Validate trusted wrapper and manifest before loading secrets
+        run: |
+          sh scripts/verify-gradle-wrapper.sh
+          python3 scripts/verify-android-manifest.py
+      - name: Validate owner beta identity and set monotonic version
+        shell: bash
+        env:
+          GRIDBLAST_BETA_KEYSTORE_B64: ${{ secrets.GRIDBLAST_BETA_KEYSTORE_B64 }}
+          GRIDBLAST_BETA_STORE_PASSWORD: ${{ secrets.GRIDBLAST_BETA_STORE_PASSWORD }}
+          GRIDBLAST_BETA_KEY_ALIAS: ${{ secrets.GRIDBLAST_BETA_KEY_ALIAS }}
+          GRIDBLAST_BETA_KEY_PASSWORD: ${{ secrets.GRIDBLAST_BETA_KEY_PASSWORD }}
+          GRIDBLAST_BETA_CERT_SHA256: ${{ secrets.GRIDBLAST_BETA_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          for name in GRIDBLAST_BETA_KEYSTORE_B64 GRIDBLAST_BETA_STORE_PASSWORD GRIDBLAST_BETA_KEY_ALIAS GRIDBLAST_BETA_KEY_PASSWORD GRIDBLAST_BETA_CERT_SHA256; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing owner beta signing secret: $name" >&2
+              exit 1
+            fi
+          done
+          # Run number increases for each newly dispatched beta workflow run.
+          # Rerunning an old run reuses its older code and must not be shipped
+          # as an upgrade over a newer beta.
+          version_code=$((10000 + GITHUB_RUN_NUMBER))
+          if (( version_code > 2100000000 )); then
+            echo "Beta versionCode exceeded Android's allowed range" >&2
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$GRIDBLAST_BETA_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/gridblast-beta.keystore"
+          test -s "$RUNNER_TEMP/gridblast-beta.keystore"
+          {
+            echo "GRIDBLAST_RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/gridblast-beta.keystore"
+            echo "GRIDBLAST_VERSION_CODE=$version_code"
+            echo "GRIDBLAST_VERSION_NAME=0.1-beta.$GITHUB_RUN_NUMBER"
+          } >> "$GITHUB_ENV"
+      - name: Build owner-signed beta and run game tests
+        env:
+          GRIDBLAST_RELEASE_STORE_PASSWORD: ${{ secrets.GRIDBLAST_BETA_STORE_PASSWORD }}
+          GRIDBLAST_RELEASE_KEY_ALIAS: ${{ secrets.GRIDBLAST_BETA_KEY_ALIAS }}
+          GRIDBLAST_RELEASE_KEY_PASSWORD: ${{ secrets.GRIDBLAST_BETA_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease
+      - name: Verify signature identity, increasing version and package privacy
+        shell: bash
+        env:
+          GRIDBLAST_BETA_CERT_SHA256: ${{ secrets.GRIDBLAST_BETA_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/release/app-release.apk"
+          test -s "$apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/beta-certificate.txt"
+          actual="$(awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}' "$RUNNER_TEMP/beta-certificate.txt" | tr '[:upper:]' '[:lower:]' | tr -d ':')"
+          expected="$(printf '%s' "$GRIDBLAST_BETA_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          if [[ ! "$expected" =~ ^[a-f0-9]{64}$ || "$actual" != "$expected" ]]; then
+            echo "Owner beta certificate fingerprint mismatch. Refusing to distribute APK." >&2
+            exit 1
+          fi
+          badging="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk")"
+          grep -Fq "package: name='tv.prohibited.gridblast' versionCode='$GRIDBLAST_VERSION_CODE'" <<< "$badging" || {
+            echo "Signed beta package ID or versionCode mismatch" >&2
+            exit 1
+          }
+          grep -Fq "versionName='$GRIDBLAST_VERSION_NAME'" <<< "$badging" || {
+            echo "Signed beta versionName mismatch" >&2
+            exit 1
+          }
+          bash scripts/verify-apk-security.sh release "$apk"
+          echo "Verified owner-signed beta versionCode $GRIDBLAST_VERSION_CODE; signing fingerprint matches pinned secret."
+      - name: Upload verified owner-signed beta APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: GridBlast-owner-signed-beta-${{ github.run_number }}
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Delete private beta keystore and temporary certificate
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/gridblast-beta.keystore" "$RUNNER_TEMP/beta-certificate.txt"
