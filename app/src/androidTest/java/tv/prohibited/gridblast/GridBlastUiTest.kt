@@ -1,6 +1,7 @@
 package tv.prohibited.gridblast
 
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
@@ -406,6 +408,39 @@ class GridBlastUiTest {
         compose.onNodeWithTag("score-value").assertTextEquals(score.toString())
         compose.onNodeWithTag("tray-slot-0")
             .assertContentDescriptionEquals("Empty shape slot")
+    }
+
+    @Test
+    fun systemBackFromHelpKeepsTheCurrentGameAndUndo() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+
+        compose.onNodeWithTag("options-button").performClick()
+        compose.onNodeWithTag("how-to-play-button").performClick()
+        compose.onNodeWithText("How to play").assertExists()
+        Espresso.pressBack()
+        compose.onNodeWithTag("sound-switch").assertExists()
+        Espresso.pressBack()
+
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+    }
+
+    @Test
+    fun gameplayNeedsNoInternetPermission() {
+        val permission = compose.activity.packageManager.checkPermission(
+            android.Manifest.permission.INTERNET,
+            compose.activity.packageName,
+        )
+        assertEquals(PackageManager.PERMISSION_DENIED, permission)
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
     }
 
     @Test

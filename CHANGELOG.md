@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Expanded emulator QA from eight to eleven profiles: airplane-mode dark theme, three-button navigation and animations-on interaction stress. All profiles now verify cold process relaunch; new UI tests check system Back from Help and offline placement, without claiming physical-device acceptance or saved-turn recovery after force-stop.
+
 - Expanded emulator QA with Android 8.0 (the declared minimum supported OS) and a 360×640 short phone at 1.3× font scale; added a lifecycle background/resume regression test for board, score and Undo preservation.
 
 - Expanded the Android emulator suite to Android 16, 360dp phones at 1.4x text size, and 600dp tablet viewports. Real emulator screenshots exposed a cramped tablet layout: reserve a minimum 8dp gap above the board, with UI regressions for board/score spacing, controls, and help visibility. Real-device QA remains an independent release gate.
