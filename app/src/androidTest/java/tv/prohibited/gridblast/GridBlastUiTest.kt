@@ -424,10 +424,13 @@ class GridBlastUiTest {
         // Send actual Android Back key events to the focused dialog window,
         // rather than Espresso's root picker (the activity lacks focus here).
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        assertTrue("Back should return from Help to Options", device.pressBack())
+        // UiDevice.pressBack() may return false if Compose updates content
+        // inside the same window without the window-change event UiAutomator
+        // waits for. Judge the actual visible navigation, not that return flag.
+        device.pressBack()
         compose.waitForIdle()
         compose.onNodeWithTag("sound-switch").assertExists()
-        assertTrue("Back should close Options", device.pressBack())
+        device.pressBack()
         compose.waitForIdle()
 
         compose.onNodeWithTag("score-value").assertTextEquals("1")
