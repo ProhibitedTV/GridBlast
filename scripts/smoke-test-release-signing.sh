@@ -31,6 +31,11 @@ export GRIDBLAST_RELEASE_STORE_PASSWORD="$password"
 export GRIDBLAST_RELEASE_KEY_ALIAS="gridblast-ci-only"
 export GRIDBLAST_RELEASE_KEY_PASSWORD="$password"
 
+# Exercise the same version-override path as the future persistent-owner-key
+# beta workflow, but ONLY with this throwaway key and no distributable artifact.
+export GRIDBLAST_VERSION_CODE=10001
+export GRIDBLAST_VERSION_NAME=0.1-beta.ci
+
 ./gradlew --no-daemon :app:assembleRelease :app:bundleRelease
 
 apk="app/build/outputs/apk/release/app-release.apk"
@@ -46,6 +51,16 @@ grep -Fq "CN=Disposable CI Signing Test" "$tmpdir/apk-signature.txt" || {
 jarsigner -verify "$aab" > "$tmpdir/bundle-signature.txt" 2>&1
 grep -Fq "jar verified" "$tmpdir/bundle-signature.txt" || {
   echo "AAB archive signature did not verify" >&2
+  exit 1
+}
+
+badging="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk")"
+grep -Fq "package: name='tv.prohibited.gridblast' versionCode='$GRIDBLAST_VERSION_CODE'" <<< "$badging" || {
+  echo "Disposable signing smoke: beta versionCode override missing" >&2
+  exit 1
+}
+grep -Fq "versionName='$GRIDBLAST_VERSION_NAME'" <<< "$badging" || {
+  echo "Disposable signing smoke: beta versionName override missing" >&2
   exit 1
 }
 
