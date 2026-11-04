@@ -22,7 +22,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
-import androidx.test.espresso.Espresso
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
@@ -420,9 +421,14 @@ class GridBlastUiTest {
         compose.onNodeWithTag("options-button").performClick()
         compose.onNodeWithTag("how-to-play-button").performClick()
         compose.onNodeWithText("How to play").assertExists()
-        Espresso.pressBack()
+        // Send actual Android Back key events to the focused dialog window,
+        // rather than Espresso's root picker (the activity lacks focus here).
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        assertTrue("Back should return from Help to Options", device.pressBack())
+        compose.waitForIdle()
         compose.onNodeWithTag("sound-switch").assertExists()
-        Espresso.pressBack()
+        assertTrue("Back should close Options", device.pressBack())
+        compose.waitForIdle()
 
         compose.onNodeWithTag("score-value").assertTextEquals("1")
         compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
