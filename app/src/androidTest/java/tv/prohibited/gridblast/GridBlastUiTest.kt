@@ -16,6 +16,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -420,18 +421,27 @@ class GridBlastUiTest {
 
         compose.onNodeWithTag("options-button").performClick()
         compose.onNodeWithTag("how-to-play-button").performClick()
-        compose.onNodeWithText("How to play").assertExists()
-        // Send actual Android Back key events to the focused dialog window,
-        // rather than Espresso's root picker (the activity lacks focus here).
+        compose.onNodeWithText("How to play").assertIsDisplayed()
+        compose.onNodeWithTag("how-to-play-back-button").assertIsDisplayed()
+
+        // A dialog can be in the Compose semantics tree before Android's
+        // separate WindowManager window has become focused. In CI this made
+        // system Back escape to InstrumentationActivityInvoker instead of
+        // being delivered to the Help dialog. Wait for the platform window
+        // to become idle before sending the real system key.
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        // UiDevice.pressBack() may return false if Compose updates content
-        // inside the same window without the window-change event UiAutomator
-        // waits for. Judge the actual visible navigation, not that return flag.
+        device.waitForIdle(10_000)
         device.pressBack()
-        compose.waitForIdle()
-        compose.onNodeWithTag("sound-switch").assertExists()
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodesWithTag("sound-switch").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("sound-switch").assertIsDisplayed()
+
+        device.waitForIdle(10_000)
         device.pressBack()
-        compose.waitForIdle()
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodesWithTag("score-value").fetchSemanticsNodes().isNotEmpty()
+        }
 
         compose.onNodeWithTag("score-value").assertTextEquals("1")
         compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
