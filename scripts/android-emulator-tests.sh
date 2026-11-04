@@ -91,9 +91,7 @@ sleep 2
 # It is not a substitute for human gameplay/balance testing.
 if [ "${1}" = "motion-enabled-360dp" ]; then
   monkey_log="app/build/emulator-screenshots/GridBlast-monkey-motion-enabled.log"
-  adb shell monkey -p "$pkg" -s 20261104 --monitor-native-crashes \\
-    --throttle 25 --pct-touch 70 --pct-motion 20 --pct-nav 10 250 \\
-    > "$monkey_log" 2>&1 || { cat "$monkey_log"; exit 1; }
+  adb shell monkey -p "$pkg" -s 20261104 --monitor-native-crashes --throttle 25 --pct-touch 70 --pct-motion 20 --pct-nav 10 250 > "$monkey_log" 2>&1 || { cat "$monkey_log"; exit 1; }
   grep -F "Events injected: 250" "$monkey_log" >/dev/null || {
     echo "Random touch run finished without recording 250 events" >&2
     cat "$monkey_log"; exit 1;
@@ -105,8 +103,7 @@ fi
 # This checks startup survival, not that a completed turn survives process death;
 # instrumentation separately checks lifecycle/save/Undo behavior.
 adb shell am force-stop "$pkg"
-adb shell am start -W -n "$pkg/.MainActivity" \\
-  > "app/build/emulator-screenshots/GridBlast-relaunch-${1}.txt"
+adb shell am start -W -n "$pkg/.MainActivity" > "app/build/emulator-screenshots/GridBlast-relaunch-${1}.txt"
 sleep 2
 pid="$(adb shell pidof "$pkg" | tr -d '\r')"
 [ -n "$pid" ] || {
