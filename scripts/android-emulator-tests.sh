@@ -114,9 +114,51 @@ run_recovery_phase() {
 
 PROFILE="$1"
 adb shell pm clear "$pkg" >/dev/null
-run_recovery_phase prepare prepareSavedTurnForForceStop
+
+# The prepare test intentionally DOES NOT finish: its Compose activity stays
+# alive until the host force-stops the Android app process. Only its on-device
+# readiness marker proves that a real UI placement and persistence assertions
+# were completed. A normal prepare test exit is a failure, not evidence.
+prepare_log="app/build/emulator-screenshots/GridBlast-process-recovery-prepare-${ANDROID_API_LEVEL:-unknown}-${PROFILE}.txt"
+adb shell am instrument -w -e recovery_phase prepare -e class "$recovery_test#prepareSavedTurnForForceStop" "$runner" > "$prepare_log" 2>&1 &
+prepare_host_pid=$!
+ready=no
+poll=0
+while [ "$poll" -lt 65 ]; do
+  marker="$(adb shell run-as "$pkg" cat files/gridblast-recovery-ready-v1 2>/dev/null | tr -d '\r' || true)"
+  if [ "$marker" = "ready-v1" ]; then
+    ready=yes
+    break
+  fi
+  if ! kill -0 "$prepare_host_pid" 2>/dev/null; then
+    echo "Prepare instrumentation exited before signal; expected a live app" >&2
+    cat "$prepare_log"
+    exit 1
+  fi
+  poll=$((poll + 1))
+  sleep 1
+done
+if [ "$ready" != yes ]; then
+  echo "Prepare phase never produced its on-device readiness marker" >&2
+  cat "$prepare_log"
+  kill "$prepare_host_pid" 2>/dev/null || true
+  exit 1
+fi
+before_pid="$(adb shell pidof "$pkg" | tr -d '\r')"
+[ -n "$before_pid" ] || {
+  echo "App was not running at moment of attempted force-stop" >&2
+  exit 1
+}
+echo "Force-stopping live GridBlast process PID $before_pid"
 adb shell am force-stop "$pkg"
-# A force-stop is an OS process kill, not an activity recreation.
+# Do not wait for success from the intentionally aborted prepare invocation.
+kill "$prepare_host_pid" 2>/dev/null || true
+wait "$prepare_host_pid" 2>/dev/null || true
+after_pid="$(adb shell pidof "$pkg" 2>/dev/null | tr -d '\r' || true)"
+[ -z "$after_pid" ] || {
+  echo "Force-stop did not kill GridBlast process: $after_pid" >&2
+  exit 1
+}
 run_recovery_phase verify verifySavedTurnAfterForceStopAndUndo
 
 # Reset the now-verified test fixture before capturing the normal launch screenshot.
