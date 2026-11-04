@@ -82,8 +82,87 @@ pkg=tv.prohibited.gridblast
 apk=app/build/outputs/apk/debug/app-debug.apk
 test -s "$apk"
 adb install -r "$apk" >/dev/null
-adb shell pm clear "$pkg" >/dev/null
 mkdir -p app/build/emulator-screenshots
+
+# Install the real test APK and run two named tests in separate instrumentation
+# invocations. The Android package is killed BETWEEN them; the second test
+# asserts exact persisted board, tray, score, best score and Undo checkpoint.
+test_apk="$(find app/build/outputs/apk/androidTest -type f -name '*-androidTest.apk' -print -quit)"
+[ -n "$test_apk" ] && [ -s "$test_apk" ] || {
+  echo "Instrumentation APK not found; cannot test process-death recovery" >&2
+  exit 1
+}
+adb install -r "$test_apk" >/dev/null
+
+recovery_test=tv.prohibited.gridblast.GameProcessRecoveryTest
+runner="$pkg.test/androidx.test.runner.AndroidJUnitRunner"
+run_recovery_phase() {
+  phase="$1"
+  method="$2"
+  logfile="app/build/emulator-screenshots/GridBlast-process-recovery-${phase}-${ANDROID_API_LEVEL:-unknown}-${PROFILE}.txt"
+  adb shell am instrument -w -e recovery_phase "$phase" -e class "$recovery_test#$method" "$runner" > "$logfile" 2>&1 || {
+    cat "$logfile"
+    exit 1
+  }
+  if ! grep -F 'OK (1 test)' "$logfile" >/dev/null; then
+    echo "Android instrumentation phase '$phase' did not pass exactly one test" >&2
+    cat "$logfile"
+    exit 1
+  fi
+  echo "Real process recovery phase '$phase' passed"
+}
+
+PROFILE="$1"
+adb shell pm clear "$pkg" >/dev/null
+
+# The prepare test intentionally DOES NOT finish: its Compose activity stays
+# alive until the host force-stops the Android app process. Only its on-device
+# readiness marker proves that a real UI placement and persistence assertions
+# were completed. A normal prepare test exit is a failure, not evidence.
+prepare_log="app/build/emulator-screenshots/GridBlast-process-recovery-prepare-${ANDROID_API_LEVEL:-unknown}-${PROFILE}.txt"
+adb shell am instrument -w -e recovery_phase prepare -e class "$recovery_test#prepareSavedTurnForForceStop" "$runner" > "$prepare_log" 2>&1 &
+prepare_host_pid=$!
+ready=no
+poll=0
+while [ "$poll" -lt 65 ]; do
+  marker="$(adb shell run-as "$pkg" cat files/gridblast-recovery-ready-v1 2>/dev/null | tr -d '\r' || true)"
+  if [ "$marker" = "ready-v1" ]; then
+    ready=yes
+    break
+  fi
+  if ! kill -0 "$prepare_host_pid" 2>/dev/null; then
+    echo "Prepare instrumentation exited before signal; expected a live app" >&2
+    cat "$prepare_log"
+    exit 1
+  fi
+  poll=$((poll + 1))
+  sleep 1
+done
+if [ "$ready" != yes ]; then
+  echo "Prepare phase never produced its on-device readiness marker" >&2
+  cat "$prepare_log"
+  kill "$prepare_host_pid" 2>/dev/null || true
+  exit 1
+fi
+before_pid="$(adb shell pidof "$pkg" | tr -d '\r')"
+[ -n "$before_pid" ] || {
+  echo "App was not running at moment of attempted force-stop" >&2
+  exit 1
+}
+echo "Force-stopping live GridBlast process PID $before_pid"
+adb shell am force-stop "$pkg"
+# Do not wait for success from the intentionally aborted prepare invocation.
+kill "$prepare_host_pid" 2>/dev/null || true
+wait "$prepare_host_pid" 2>/dev/null || true
+after_pid="$(adb shell pidof "$pkg" 2>/dev/null | tr -d '\r' || true)"
+[ -z "$after_pid" ] || {
+  echo "Force-stop did not kill GridBlast process: $after_pid" >&2
+  exit 1
+}
+run_recovery_phase verify verifySavedTurnAfterForceStopAndUndo
+
+# Reset the now-verified test fixture before capturing the normal launch screenshot.
+adb shell pm clear "$pkg" >/dev/null
 adb shell am start -W -n "$pkg/.MainActivity"
 sleep 2
 

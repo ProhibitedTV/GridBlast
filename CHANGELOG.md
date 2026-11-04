@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Verify exact completed-turn persistence across a real Android force-stop and separate test process on every emulator profile: board, tray, score, best score and one-step Undo must survive and remain usable. Test evidence is stored as per-phase CI logs; update/reinstall continuity remains a separate gate.
+
 - Expanded emulator QA from eight to eleven profiles: airplane-mode dark theme, three-button navigation and animations-on interaction stress. All profiles now verify cold process relaunch; new UI tests check system Back from Help and offline placement, without claiming physical-device acceptance or saved-turn recovery after force-stop.
 
 - Expanded emulator QA with Android 8.0 (the declared minimum supported OS) and a 360×640 short phone at 1.3× font scale; added a lifecycle background/resume regression test for board, score and Undo preservation.
