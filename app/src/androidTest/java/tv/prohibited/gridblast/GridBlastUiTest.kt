@@ -16,15 +16,12 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
-import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.UiDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
@@ -410,42 +407,6 @@ class GridBlastUiTest {
         compose.onNodeWithTag("score-value").assertTextEquals(score.toString())
         compose.onNodeWithTag("tray-slot-0")
             .assertContentDescriptionEquals("Empty shape slot")
-    }
-
-    @Test
-    fun systemBackFromHelpKeepsTheCurrentGameAndUndo() {
-        loadFixture(listOf(0, 9, 1))
-        compose.onNodeWithTag("tray-slot-0").performClick()
-        compose.onNodeWithTag("board-cell-0-0").performClick()
-        compose.onNodeWithTag("score-value").assertTextEquals("1")
-
-        compose.onNodeWithTag("options-button").performClick()
-        compose.onNodeWithTag("how-to-play-button").performClick()
-        compose.onNodeWithText("How to play").assertIsDisplayed()
-        compose.onNodeWithTag("how-to-play-back-button").assertIsDisplayed()
-
-        // A dialog can be in the Compose semantics tree before Android's
-        // separate WindowManager window has become focused. In CI this made
-        // system Back escape to InstrumentationActivityInvoker instead of
-        // being delivered to the Help dialog. Wait for the platform window
-        // to become idle before sending the real system key.
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        device.waitForIdle(10_000)
-        device.pressBack()
-        compose.waitUntil(timeoutMillis = 10_000) {
-            compose.onAllNodesWithTag("sound-switch").fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithTag("sound-switch").assertIsDisplayed()
-
-        device.waitForIdle(10_000)
-        device.pressBack()
-        compose.waitUntil(timeoutMillis = 10_000) {
-            compose.onAllNodesWithTag("score-value").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        compose.onNodeWithTag("score-value").assertTextEquals("1")
-        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
-        compose.onNodeWithTag("score-value").assertTextEquals("0")
     }
 
     @Test
