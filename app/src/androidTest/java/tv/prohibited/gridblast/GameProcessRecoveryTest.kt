@@ -25,12 +25,14 @@ import tv.prohibited.gridblast.game.GameState
 import tv.prohibited.gridblast.game.GameStateCodec
 
 /**
- * A two-invocation, actual-process test. CI runs prepare(), force-stops the
- * application package with Android ActivityManager, then runs verify() in a
- * separate instrumentation invocation. No mocking and no debug-only app code.
+ * A two-invocation, actual-process test. The prepare invocation makes a
+ * live UI move, writes a readiness marker to the app's private files and
+ * deliberately parks its TEST THREAD while the activity remains on-screen.
+ * The host driver observes the marker then force-stops the still-running
+ * app package. It starts a new instrumentation process to verify exact save
+ * recovery. Neither phase is evidence without the external orchestration.
  *
- * Both tests are skipped in the ordinary connectedDebugAndroidTest suite;
- * running just one of them without the CI orchestration proves nothing.
+ * Both tests are skipped in ordinary connectedDebugAndroidTest.
  */
 @RunWith(AndroidJUnit4::class)
 class GameProcessRecoveryTest {
@@ -83,6 +85,18 @@ class GameProcessRecoveryTest {
         assertEquals(expectedHistory(), GameHistoryCodec.decode(prefs.getString("history_v1", null)))
         assertEquals(expectedHistory().current, GameStateCodec.decode(prefs.getString("session_v1", null)))
         assertEquals(1, prefs.getInt("best_score", -1))
+
+        // Host watches this private file, not a successful test completion.
+        // Holding the instrumentation thread keeps ActivityScenarioRule from
+        // tearing down the active activity and flushing state on normal exit.
+        compose.activity.openFileOutput("gridblast-recovery-ready-v1", Context.MODE_PRIVATE).use {
+            it.write("ready-v1".toByteArray(Charsets.UTF_8))
+            it.fd.sync()
+        }
+        // CI force-stops the running application. Reaching this exception
+        // means it did NOT do so and must fail rather than silently pass.
+        Thread.sleep(120_000)
+        throw AssertionError("Prepare process was never force-stopped while activity was active")
     }
 
     @Test
