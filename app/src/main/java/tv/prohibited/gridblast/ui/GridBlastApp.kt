@@ -1,6 +1,9 @@
 package tv.prohibited.gridblast.ui
 
 import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -36,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,9 +69,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import tv.prohibited.gridblast.game.Cell
+import tv.prohibited.gridblast.game.GameBackup
+import tv.prohibited.gridblast.game.GameBackupCodec
 import tv.prohibited.gridblast.game.DragPlacement
 import tv.prohibited.gridblast.game.GameEngine
 import tv.prohibited.gridblast.game.GameHistory
@@ -100,6 +109,37 @@ private data class ActiveDrag(val slot: Int, val point: Offset)
 // (the placement reference) sits 56dp above the touch point.
 private val liftOffset = 56.dp
 private val boardPadding = 4.dp
+
+// Android's Storage Access Framework lets the player select a local/cloud
+// document provider without granting this app broad storage or network access.
+private fun writeBackupDocument(context: Context, uri: Uri, backup: GameBackup) {
+    val payload = GameBackupCodec.encode(backup).toByteArray(Charsets.UTF_8)
+    val stream = context.contentResolver.openOutputStream(uri, "wt")
+        ?: throw java.io.IOException("Cannot open selected destination")
+    stream.use { it.write(payload) }
+}
+
+private fun readBackupDocument(context: Context, uri: Uri): GameBackup {
+    val stream = context.contentResolver.openInputStream(uri)
+        ?: throw java.io.IOException("Cannot open selected backup")
+    val payload = stream.use { input ->
+        // Read at most 8193 bytes; never allocate proportional to an untrusted
+        // file size. The codec additionally validates format and checksum.
+        val bytes = ByteArray(GameBackupCodec.MAX_BYTES + 1)
+        var count = 0
+        while (count < bytes.size) {
+            val read = input.read(bytes, count, bytes.size - count)
+            if (read < 0) break
+            if (read > 0) count += read
+        }
+        if (count > GameBackupCodec.MAX_BYTES) {
+            throw java.io.IOException("Backup exceeds supported size")
+        }
+        String(bytes, 0, count, Charsets.UTF_8)
+    }
+    return GameBackupCodec.decode(payload)
+        ?: throw java.io.IOException("Invalid or damaged GridBlast backup")
+}
 
 @Composable
 fun GridBlastApp() {
@@ -152,6 +192,47 @@ fun GridBlastApp() {
     var invalidDropMessage by remember { mutableStateOf("") }
     var invalidDropSequence by remember { mutableIntStateOf(0) }
     val clearFlash = remember { Animatable(0f) }
+    val backupScope = rememberCoroutineScope()
+    var pendingRestore by remember { mutableStateOf<GameBackup?>(null) }
+    var backupNotice by remember { mutableStateOf<String?>(null) }
+
+    val exportBackup = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/plain"),
+    ) { uri ->
+        if (uri != null) {
+            // Capture all fields together at the moment of export.
+            val snapshot = GameBackup(
+                history = history,
+                bestScore = bestScore,
+                soundEnabled = soundEnabled,
+                hapticsEnabled = hapticsEnabled,
+                motionEnabled = motionEnabled,
+            )
+            backupScope.launch {
+                val saved = withContext(Dispatchers.IO) {
+                    runCatching { writeBackupDocument(context, uri, snapshot) }.isSuccess
+                }
+                backupNotice = if (saved) "Game backup saved to your chosen document." else
+                    "Couldn't save the backup. Your game is unchanged; try another destination."
+            }
+        }
+    }
+
+    val importBackup = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            backupScope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    runCatching { readBackupDocument(context, uri) }
+                }
+                result.onSuccess { pendingRestore = it }
+                    .onFailure {
+                        backupNotice = "That file isn't a valid GridBlast backup. Your game is unchanged."
+                    }
+            }
+        }
+    }
 
     LaunchedEffect(clearSequence, motionEnabled) {
         if (clearSequence > 0 && motionEnabled && flashCells.isNotEmpty()) {
@@ -512,7 +593,86 @@ fun GridBlastApp() {
                     motionEnabled = enabled
                     preferences.edit().putBoolean("motion_enabled", enabled).apply()
                 },
+                onBackupRequested = {
+                    showSettings = false
+                    exportBackup.launch("GridBlast-backup.txt")
+                },
+                onRestoreRequested = {
+                    showSettings = false
+                    importBackup.launch(arrayOf("text/plain", "application/octet-stream"))
+                },
                 onDismiss = { showSettings = false },
+            )
+        }
+
+        val candidate = pendingRestore
+        if (candidate != null) {
+            AlertDialog(
+                onDismissRequest = { pendingRestore = null },
+                title = { Text("Restore saved game?") },
+                text = {
+                    Text(
+                        "Import score ${candidate.history.current.score}, your last Undo, and all " +
+                            "three settings? This replaces the current round. " +
+                            "Your higher local or imported best score will be kept."
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val newBest = maxOf(bestScore, candidate.bestScore, candidate.history.current.score)
+                            // Commit the complete restored snapshot first. If storage fails,
+                            // keep the running game unchanged rather than half-restored.
+                            val committed = preferences.edit()
+                                .putString("history_v1", GameHistoryCodec.encode(candidate.history))
+                                .putString("session_v1", GameStateCodec.encode(candidate.history.current))
+                                .putInt("best_score", newBest)
+                                .putBoolean("sound_enabled", candidate.soundEnabled)
+                                .putBoolean("haptics_enabled", candidate.hapticsEnabled)
+                                .putBoolean("motion_enabled", candidate.motionEnabled)
+                                .commit()
+                            pendingRestore = null
+                            if (committed) {
+                                history = candidate.history
+                                bestScore = newBest
+                                soundEnabled = candidate.soundEnabled
+                                hapticsEnabled = candidate.hapticsEnabled
+                                motionEnabled = candidate.motionEnabled
+                                selectedSlot = -1
+                                suggestedMove = null
+                                activeDrag = null
+                                confirmRestart = false
+                                flashCells = emptySet()
+                                clearMessage = ""
+                                invalidDropMessage = ""
+                                backupNotice = "Saved game restored. Your current round and Undo are ready."
+                            } else {
+                                backupNotice = "Couldn't restore the game. Existing progress is unchanged."
+                            }
+                        },
+                        modifier = Modifier.testTag("confirm-restore-backup"),
+                    ) { Text("RESTORE") }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { pendingRestore = null },
+                        modifier = Modifier.testTag("cancel-restore-backup"),
+                    ) { Text("CANCEL") }
+                },
+            )
+        }
+        val notice = backupNotice
+        if (notice != null && pendingRestore == null) {
+            AlertDialog(
+                onDismissRequest = { backupNotice = null },
+                title = { Text("Game backup") },
+                text = { Text(notice) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { backupNotice = null },
+                        modifier = Modifier.testTag("backup-message-dismiss"),
+                    ) { Text("OK") }
+                },
             )
         }
 
@@ -525,7 +685,7 @@ fun GridBlastApp() {
                 dismissButton = { TextButton(onClick = { confirmRestart = false }, modifier = Modifier.testTag("cancel-restart")) { Text("CANCEL") } },
             )
         }
-        if (game.gameOver && !confirmRestart) {
+        if (game.gameOver && !confirmRestart && pendingRestore == null && backupNotice == null) {
             AlertDialog(
                 onDismissRequest = {},
                 title = { Text("No more moves") },
