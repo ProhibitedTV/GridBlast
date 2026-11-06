@@ -31,6 +31,10 @@ The dedicated **upgrade-in-place-360dp** profile is different from the other 11:
 
 Changing an emulator's resolution/density is **not** equivalent to physical tablet hardware or a particular vendor's phone. This matrix can detect many startup, Compose layout, input, and persistence regressions, but it cannot validate thermal behavior, ergonomics, real audio routing, TalkBack speech usability, screen brightness, battery life, or store acceptance. An emulator report passes only when all jobs finish successfully.
 
+### Emulator CI failure triage (issue #60)
+
+Each matrix job uploads `emulator-diagnostics/` alongside the existing real UI screenshots and instrumentation results. The host preflight captures disk/memory/KVM/SDK state; the test script captures `adb devices`, the Android boot flag and package-service readiness *before* UI tests. The full connected-test Gradle output is saved even when it fails. A post-run summary labels a failure as likely **setup/boot infrastructure** if the test script never launched, likely **adb/package-service infrastructure** for recognized transient signatures without an assertion, **test assertion failure** if actual test evidence exists, or **unclassified** when evidence is insufficient. These are advisory labels, not automatic root-cause determinations. The workflow retains a failing conclusion on any failed emulator step, even when its classification suggests infrastructure. There is deliberately **no automatic retry** of tests; a maintainer may rerun only the affected failed job after inspecting logs. The 12 profiles, app state checks, and update continuity gates remain mandatory.
+
 After instrumented tests pass, each emulator launches a fresh installed build and records a **real screenshot of its rendered screen** in the `GridBlast-emulator-report-*` artifact. The screenshots are for manual clipping/layout review only. They are **not** proof of a physical-device test and must not be mislabeled as hardware captures or final Google Play store screenshots.
 
 ## Automated install-over-install continuity (disposable key)
