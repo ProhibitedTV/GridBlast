@@ -29,6 +29,12 @@ Changing an emulator's resolution/density is **not** equivalent to physical tabl
 
 After instrumented tests pass, each emulator launches a fresh installed build and records a **real screenshot of its rendered screen** in the `GridBlast-emulator-report-*` artifact. The screenshots are for manual clipping/layout review only. They are **not** proof of a physical-device test and must not be mislabeled as hardware captures or final Google Play store screenshots.
 
+## Automated install-over-install continuity (disposable key)
+
+The [Android upgrade workflow](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android-upgrade.yml) runs a **distinct** two-version APK test on Android 8 (API 26) and Android 16 (API 36) emulators. Each isolated runner generates one temporary, non-distributable signing certificate. It builds version **100101**, installs the APK and test package, makes an actual UI placement, changes sound/motion/haptics settings, and verifies the saved board, tray, score, best score and one-step Undo. Without removing the app or clearing storage, it builds **100102** with the **same signing certificate**, calls `adb install -r`, checks the installed version and launches an independent instrumentation invocation. The test must verify the exact previous state and settings, then use Undo while keeping the all-time best score. It uploads plain-text evidence only and deletes the temporary key; no APK or keystore is made available for download.
+
+This checks the Android package update and app-private persistence semantics with signed **debug** APKs, not the owner's actual beta certificate or a store-delivered release APK. The distinct real-phone **owner-signed A→B upgrade acceptance** remains open in [#50](https://github.com/ProhibitedTV/GridBlast/issues/50). A key change, uninstall, data clear or reinstall cannot be assumed to retain saved progress; Android backup is intentionally disabled.
+
 ## Before starting
 
 Use an installable APK from a successful [Android CI](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android.yml) run on `main`, or a locally built debug APK. Capture the exact Git commit SHA and APK filename; avoid testing an unknown older build. For the signed-release gate, separately test the owner-signed release APK rather than treating debug QA as equivalent. Never publish production keystores, passwords, contacts, or private device logs.
