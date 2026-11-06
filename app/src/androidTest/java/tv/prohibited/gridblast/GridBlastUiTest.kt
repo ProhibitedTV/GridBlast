@@ -208,8 +208,9 @@ class GridBlastUiTest {
 
         compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
         compose.onNodeWithTag("tray-slot-0").performClick()
+        // A different row/column must also respond in its visual gutter.
         compose.onNodeWithTag("board-cell-1-1").performTouchInput {
-            click(Offset(size.width - 1f, size.height - 1f))
+            click(Offset(1f, 1f))
         }
         compose.onNodeWithTag("score-value").assertTextEquals("1")
         compose.onNodeWithTag("board-cell-1-1")
