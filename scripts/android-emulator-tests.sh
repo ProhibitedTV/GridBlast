@@ -3,6 +3,13 @@
 # These are software-emulated configurations, not physical hardware acceptance.
 set -eu
 
+# The twelfth emulator slot is an APK upgrade test, not an ordinary
+# instrumentation sweep. Its two versions and test APK share one disposable
+# runner-local debug signer; no owner release credentials are used.
+if [ "${1:-}" = "upgrade-in-place-360dp" ]; then
+  exec sh scripts/android-upgrade-tests.sh
+fi
+
 case "${1:-}" in
   compact-320dp)
     adb shell wm density 160
