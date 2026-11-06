@@ -625,14 +625,11 @@ private fun Board(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .padding(2.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(fill)
-                            .border(
-                                1.dp,
-                                if (outlinedAnchor) highlightColor.copy(alpha = 0.70f) else Color.Transparent,
-                                RoundedCornerShape(5.dp),
-                            )
+                            // The full allocated grid square is tappable, including
+                            // the 2dp visual gutter around its painted tile.
+                            // On short phones the board can be ~200dp across;
+                            // applying padding BEFORE clickable would make its
+                            // already-small tap targets 4dp narrower per axis.
                             .testTag("board-cell-$row-$col")
                             .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
@@ -651,7 +648,17 @@ private fun Board(
                                     id == 0 -> "Row ${row + 1}, column ${col + 1}: empty"
                                     else -> "Row ${row + 1}, column ${col + 1}: occupied"
                                 }
-                            },
+                            }
+                            // Keep the same rounded visual tiles and gutter, but
+                            // move inset/drawing modifiers INSIDE the hit target.
+                            .padding(2.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(fill)
+                            .border(
+                                1.dp,
+                                if (outlinedAnchor) highlightColor.copy(alpha = 0.70f) else Color.Transparent,
+                                RoundedCornerShape(5.dp),
+                            ),
                     )
                 }
             }
