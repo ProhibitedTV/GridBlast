@@ -485,6 +485,23 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun offlineBackupAndRestoreAreDiscoverableInOptions() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("options-button").performClick()
+        compose.onNodeWithTag("backup-game-button").assertExists()
+        compose.onNodeWithTag("restore-game-button").assertExists()
+        compose.onNodeWithTag("how-to-play-button").performClick()
+        compose.onNodeWithText("Your progress").assertExists()
+        compose.onNodeWithTag("how-to-play-back-button").performClick()
+        compose.onNodeWithTag("options-done-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("undo-button").assertIsEnabled()
+    }
+
+    @Test
     fun privacyPolicyIsReadableOfflineFromOptions() {
         compose.onNodeWithTag("options-button").performClick()
         compose.onNodeWithTag("privacy-button").performClick()
