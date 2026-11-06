@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
@@ -491,9 +492,11 @@ class GridBlastUiTest {
         compose.onNodeWithTag("board-cell-0-0").performClick()
         compose.onNodeWithTag("score-value").assertTextEquals("1")
         compose.onNodeWithTag("options-button").performClick()
-        compose.onNodeWithTag("backup-game-button").assertExists()
-        compose.onNodeWithTag("restore-game-button").assertExists()
-        compose.onNodeWithTag("how-to-play-button").performClick()
+        // In a short screen the backup tools may be below the fold, but
+        // users must be able to scroll to either action with large text.
+        compose.onNodeWithTag("backup-game-button").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("restore-game-button").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("how-to-play-button").performScrollTo().performClick()
         compose.onNodeWithText("Your progress").assertExists()
         compose.onNodeWithTag("how-to-play-back-button").performClick()
         compose.onNodeWithTag("options-done-button").performClick()
