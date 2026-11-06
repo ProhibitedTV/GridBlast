@@ -2,6 +2,10 @@
 
 **Status: unexecuted acceptance plan.** Seeded JVM gameplay soak tests cover many simulated turns, but they cannot validate human enjoyment, real touch performance, Android process death or hardware accessibility. Automated CI is valuable, but it does not establish actual touch comfort, TalkBack usability, real-device sound behavior, power consumption, or Play Store acceptance. Record **observed** results, never mark a scenario passed from code review alone. See [issue #5](https://github.com/ProhibitedTV/GridBlast/issues/5) and the [Play release gate](GOOGLE_PLAY_RELEASE_CHECKLIST.md).
 
+## Touch ergonomics and measurable targets
+
+The board renders rounded tiles with 2dp painted gutters. Each board cell now places its touch handler **outside** that visual padding, making the entire grid square (rather than the smaller painted interior) tappable. The UI test `paintedCellGuttersStillAcceptTapsOnSmallScreens` checks that adjacent hit regions meet horizontally and vertically and that corner touches select the intended cells after a real tray selection. The test runs on every emulator profile, including the 360×640 / 1.3× font configuration. **This does not create 48dp targets on a physically 200dp-wide, eight-column board**; smaller cells remain a real touch-accuracy risk, and hands-on testing in [#53](https://github.com/ProhibitedTV/GridBlast/issues/53) is still required.
+
 ## Automated Android emulator coverage
 
 The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/actions/workflows/android-emulator.yml) runs the same real Compose instrumentation tests across these *software-emulated* configurations. The suite also simulates background/foreground lifecycle transitions to check saved score and one-turn Undo:

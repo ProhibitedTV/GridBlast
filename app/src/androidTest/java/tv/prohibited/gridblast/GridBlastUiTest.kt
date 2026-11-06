@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
@@ -179,6 +180,41 @@ class GridBlastUiTest {
         assertTrue("best panel and board need at least 8dp separation", board.top - bestPanel.bottom >= 8.dp)
         assertTrue("board must remain usable with enlarged text", board.bottom - board.top >= 160.dp)
         assertTrue("tray must fit in viewport", tray.right <= root.right && tray.bottom <= root.bottom)
+    }
+
+    @Test
+    fun paintedCellGuttersStillAcceptTapsOnSmallScreens() {
+        // The short 360x640 / 1.3x-font emulator can render a ~200dp board.
+        // Visual tile spacing must NOT shrink the actual row/column hitboxes.
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+
+        val first = compose.onNodeWithTag("board-cell-0-0").getUnclippedBoundsInRoot()
+        val next = compose.onNodeWithTag("board-cell-0-1").getUnclippedBoundsInRoot()
+        val below = compose.onNodeWithTag("board-cell-1-0").getUnclippedBoundsInRoot()
+        assertTrue("horizontal tap targets must meet across tile gutters",
+            first.right >= next.left - 1.dp && first.right <= next.left + 1.dp)
+        assertTrue("vertical tap targets must meet across tile gutters",
+            first.bottom >= below.top - 1.dp && first.bottom <= below.top + 1.dp)
+
+        // Touch right inside an outer corner, outside the painted tile.
+        // Before the fix, padding was outside clickable and this missed.
+        compose.onNodeWithTag("board-cell-0-0").performTouchInput {
+            click(Offset(1f, 1f))
+        }
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("board-cell-0-0")
+            .assertContentDescriptionEquals("Row 1, column 1: occupied")
+
+        compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        // A different row/column must also respond in its visual gutter.
+        compose.onNodeWithTag("board-cell-1-1").performTouchInput {
+            click(Offset(1f, 1f))
+        }
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("board-cell-1-1")
+            .assertContentDescriptionEquals("Row 2, column 2: occupied")
     }
 
     @Test

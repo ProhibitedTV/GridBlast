@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Make each board cell's full allocated square tappable, including the 2dp visual gutter on every side. The tile appearance and grid spacing are unchanged; an Android instrumentation regression now checks edge taps and adjoining hitboxes on all emulator profiles. Small-screen physical usability still needs human validation.
+
 - Added a dedicated Android 8/16 emulator test that builds two real, same-signer debug APK versions, upgrades with `adb install -r` without clearing data, and verifies that board/tray/score/Undo/best and sound/motion/haptics settings survive. Signed beta and physical-device acceptance remain outstanding.
 
 - Added a dedicated API 35 emulator regression that builds two APK versions under one temporary debug signing identity, performs an in-place update while a real saved game is active, and verifies exact board/tray/score, best score and Undo continuity after upgrading. Temporary APKs remain off artifact uploads; physical owner-signed beta upgrade acceptance is still pending.
