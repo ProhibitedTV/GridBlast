@@ -53,6 +53,16 @@ Keep an encrypted backup of your release keystore and passwords; losing your ori
 
 Normal PR CI also checks unsigned release bundle compilation, validates the committed wrapper, and rejects APKs with internet/network/advertising permissions.
 
+### Owner-signed beta APKs and progress-safe upgrades
+
+For testers who want to keep their game when installing newer betas, use the separate **manually dispatched [owner-signed beta workflow](.github/workflows/android-beta.yml)** (after the owner configures it). This is distinct from the Google Play upload/release signing identity. It is **not** enabled simply by creating the workflow file.
+
+Configure five **GitHub Actions repository secrets** before the first beta build: `GRIDBLAST_BETA_KEYSTORE_B64`, `GRIDBLAST_BETA_STORE_PASSWORD`, `GRIDBLAST_BETA_KEY_ALIAS`, `GRIDBLAST_BETA_KEY_PASSWORD`, and `GRIDBLAST_BETA_CERT_SHA256` (the 64-digit SHA-256 signing certificate fingerprint; colon-separated format also works). Back up the original beta keystore in an encrypted, offline location. Generate and inspect this signing identity locally; **never paste keystores, certificates with private keys or passwords into GitHub issues, chat, code or artifacts**.
+
+A maintainer selects **Actions → Android owner-signed beta APK → Run workflow → main**. The workflow refuses other branches and missing secrets, verifies the certificate fingerprint before uploading, checks privacy/permissions and assigns an increasing `versionCode` from its workflow run number (starting above 10000). It uploads **only an APK** for controlled beta sideload testing—not an AAB, Play production release, or unsigned artifact. Do not redistribute a *rerun of an older workflow execution* as if it were a newer upgrade; reruns reuse that original run's version code.
+
+Test a real device with **two consecutive** owner-signed beta artifacts: install A, play and note board/score/Undo, then `adb install -r app-release.apk` for B *without uninstalling or clearing storage*. Confirm the exact game and settings survive. Both artifacts **must** use the same beta signing certificate and B must have the higher version code. A preexisting CI `GridBlast-debug` install, a different beta key, or the eventual Google Play identity may be incompatible; Android does not silently migrate app-private saves across a signing-key change. Tell those testers that uninstalling erases progress. Until this owner-key flow and real-device upgrade are completed, [issue #50](https://github.com/ProhibitedTV/GridBlast/issues/50) remains open.
+
 **Signing smoke tests:** `.github/workflows/android-signing-smoke.yml` creates a **new disposable test key for every CI run**, compiles and verifies signed APK/AAB outputs, then deletes the test key. Those artifacts are **never uploaded** because they are not usable as a Play production signing identity. This validates the release signing code path without exposing or requiring your real upload keystore. Actual Google Play publishing still requires the four owner-configured signing secrets and a separately verified signed release.
 
 ## Architecture

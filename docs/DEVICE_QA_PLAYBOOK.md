@@ -15,7 +15,7 @@ The [GitHub Actions emulator matrix](https://github.com/ProhibitedTV/GridBlast/a
 | API 35 / Android 15 | 360×800 at 160dpi (360dp wide) | 1.4 | Enlarged text and dialog accessibility |
 | API 35 / Android 15 | 360×640 at 160dpi (360dp wide) | 1.3 | Short screen + large text; fit board, controls and modal actions |
 | API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **Airplane mode + system dark theme**, no network entitlement |
-| API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **Three-button system navigation**, different usable insets and Back handling |
+| API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **Three-button system navigation**, different usable insets; physical system Back behavior remains a manual QA gate |
 | API 35 / Android 15 | 360×800 at 160dpi | 1.0 | **System animations enabled**; 250 reproducible random input events |
 | API 36 / Android 16 | Standard Pixel-style phone | 1.0 | Modern platform/target-SDK regression |
 | API 36 / Android 16 | 600×960 at 160dpi (600dp wide) | 1.15 | Tablet-sized portrait layout |

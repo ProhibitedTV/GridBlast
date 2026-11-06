@@ -12,6 +12,8 @@ GridBlast is an **original, free, ad-free, offline Android block puzzle** in act
 
 **Security and compatibility:** Only use artifacts linked from this official repository. This is a development-signed sideload build, not a Google Play download; Android may display a sideload warning. Don't disable Play Protect or other system protections to install it. Android 8.0+ is the configured minimum, but physical compatibility is **not yet verified** across all devices. Existing installs signed with a different key may require uninstalling before installing this debug build; uninstalling clears local game progress.
 
+**Repeat testers:** A separate [manual owner-signed beta channel](../.github/workflows/android-beta.yml) is being prepared. It requires the maintainer's persistent beta certificate and real-device install-over-install acceptance before testers should rely on it to preserve progress. **Do not install a random new debug ZIP on top of the old one expecting an update.** When a verified owner-signed beta is provided, keep using that same signed channel with increasing build versions; changing to a Google Play or another signing identity may require uninstall and erase your saved game. See [release gate #50](https://github.com/ProhibitedTV/GridBlast/issues/50).
+
 Artifacts expire automatically. If the latest run has no artifact, use an earlier **successful `main`** Android CI run with an unexpired `GridBlast-debug` artifact.
 
 ## Try these five things
