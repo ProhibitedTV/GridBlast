@@ -124,8 +124,19 @@ fun GridBlastSettingsDialog(
                                 modifier = Modifier.testTag("motion-switch"),
                             )
                         }
+                        // Preserve the original visible Help / Privacy actions on
+                        // 360x640 phones with enlarged system text. Portable
+                        // saves are still reachable by scrolling Options.
                         Text("Settings and progress stay on this device. No account or internet required.")
-                        Text("Save a copy before switching to an APK signed with a different key. Restoring replaces your current round and settings.")
+                        TextButton(
+                            onClick = { page = OptionsPage.HOW_TO_PLAY },
+                            modifier = Modifier.testTag("how-to-play-button"),
+                        ) { Text("HOW TO PLAY") }
+                        TextButton(
+                            onClick = { page = OptionsPage.PRIVACY },
+                            modifier = Modifier.testTag("privacy-button"),
+                        ) { Text("PRIVACY POLICY") }
+                        Text("Move progress to a differently signed build: BACK UP before uninstalling, then RESTORE afterward.")
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -139,14 +150,6 @@ fun GridBlastSettingsDialog(
                                 modifier = Modifier.testTag("restore-game-button"),
                             ) { Text("RESTORE") }
                         }
-                        TextButton(
-                            onClick = { page = OptionsPage.HOW_TO_PLAY },
-                            modifier = Modifier.testTag("how-to-play-button"),
-                        ) { Text("HOW TO PLAY") }
-                        TextButton(
-                            onClick = { page = OptionsPage.PRIVACY },
-                            modifier = Modifier.testTag("privacy-button"),
-                        ) { Text("PRIVACY POLICY") }
                     }
                 }
             }
