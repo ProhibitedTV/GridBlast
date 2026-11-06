@@ -3,10 +3,40 @@
 # These are software-emulated configurations, not physical hardware acceptance.
 set -eu
 
+# Diagnostics are uploaded even when a profile fails. Record the exact stage,
+# adb device visibility, Android boot state and package-manager readiness.
+# Failure classification is advisory; this script still exits nonzero.
+diag=app/build/emulator-diagnostics
+mkdir -p "$diag"
+printf 'script-started\n' > "$diag/phase.txt"
+{
+  echo "Requested API: ${ANDROID_API_LEVEL:-unknown}; profile: ${1:-missing}"
+  date -u
+  adb version
+  adb devices -l
+  echo "--- Android boot and build ---"
+  adb shell getprop sys.boot_completed
+  adb shell getprop ro.build.version.sdk
+  echo "--- Android package manager ---"
+  adb shell cmd package list packages android
+} > "$diag/adb-readiness.txt" 2>&1 || {
+  cat "$diag/adb-readiness.txt"
+  echo "Emulator/adb readiness check failed before gameplay tests" >&2
+  exit 1
+}
+cat "$diag/adb-readiness.txt"
+boot_status="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+if [ "$boot_status" != "1" ]; then
+  echo "Emulator not fully booted (sys.boot_completed=$boot_status)" >&2
+  exit 1
+fi
+printf 'adb-ready\n' > "$diag/phase.txt"
+
 # The twelfth emulator slot is an APK upgrade test, not an ordinary
 # instrumentation sweep. Its two versions and test APK share one disposable
 # runner-local debug signer; no owner release credentials are used.
 if [ "${1:-}" = "upgrade-in-place-360dp" ]; then
+  printf 'apk-upgrade\n' > "$diag/phase.txt"
   exec sh scripts/android-upgrade-tests.sh
 fi
 
@@ -80,7 +110,16 @@ printf 'Font scale: '
 adb shell settings get system font_scale
 
 sh scripts/verify-gradle-wrapper.sh
-./gradlew --no-daemon :app:connectedDebugAndroidTest
+printf 'ui-tests\n' > "$diag/phase.txt"
+# Keep the full Gradle log for diagnostics and expose a bounded tail in Actions.
+# Any test assertion, test runner or adb failure still fails the job.
+echo "Running the complete Compose UI test suite (full log attached)"
+if ./gradlew --no-daemon :app:connectedDebugAndroidTest > "$diag/gradle-connected-test.log" 2>&1; then
+  tail -n 60 "$diag/gradle-connected-test.log"
+else
+  tail -n 200 "$diag/gradle-connected-test.log"
+  exit 1
+fi
 
 # Capture actual rendered app pixels for manual layout review. This is an
 # emulator screenshot, not a fabricated UI or a physical-device/store capture.
@@ -213,3 +252,4 @@ width, height = struct.unpack(">II", data[16:24])
 assert width >= 320 and height >= 600, f"Unexpected screenshot geometry: {width}x{height}"
 print(f"Captured real emulator UI: {width}x{height} ({len(data)} bytes) at {path}")
 PY
+printf 'completed\n' > "$diag/phase.txt"

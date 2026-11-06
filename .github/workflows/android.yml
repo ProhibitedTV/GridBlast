@@ -37,6 +37,8 @@ jobs:
           ./gradlew --version
       - name: Check POSIX emulator test script syntax
         run: sh -n scripts/android-emulator-tests.sh
+      - name: Test failure-classification safeguards
+        run: python3 -m unittest discover -s scripts -p "test_*.py" -v
       - name: Verify manifest security and local-data protection
         run: python3 scripts/verify-android-manifest.py
       - name: Validate original Play listing artwork

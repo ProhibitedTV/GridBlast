@@ -73,7 +73,22 @@ jobs:
             ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           fi
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      - name: Capture host resource and SDK preflight
+        run: |
+          mkdir -p app/build/emulator-diagnostics
+          {
+            echo '--- Host, disk, memory and KVM ---'
+            uname -a
+            df -h .
+            free -h
+            ls -l /dev/kvm || true
+            echo '--- Android SDK packages before emulator boot ---'
+            sdkmanager --list_installed | grep -E 'platform-tools|build-tools;36.0.0|platforms;android-37.0|system-images' || true
+            echo '--- Android platform tools ---'
+            adb version
+          } | tee app/build/emulator-diagnostics/host-preflight.txt
       - name: Run UI tests on Android emulator
+        id: android-emulator
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         env:
           ANDROID_API_LEVEL: ${{ matrix.api-level }}
@@ -84,6 +99,34 @@ jobs:
           profile: pixel_6
           disable-animations: ${{ matrix.form-factor != 'motion-enabled-360dp' }}
           script: sh scripts/android-emulator-tests.sh ${{ matrix.form-factor }}
+      # These steps always run after an emulator action failure. They report
+      # evidence but NEVER turn a failed UI assertion into a green check.
+      - name: Capture final emulator and adb status
+        if: always()
+        run: |
+          mkdir -p app/build/emulator-diagnostics
+          {
+            echo '--- adb device enumeration ---'
+            timeout 15s adb devices -l || true
+            echo '--- Android boot state (if a device is available) ---'
+            timeout 15s adb shell getprop sys.boot_completed || true
+            echo '--- Package service (if a device is available) ---'
+            timeout 15s adb shell cmd package list packages android || true
+            echo '--- Remaining disk space ---'
+            df -h .
+          } > app/build/emulator-diagnostics/post-run.txt 2>&1
+      - name: Classify failure for triage only
+        if: always()
+        env:
+          EMULATOR_ACTION_OUTCOME: ${{ steps.android-emulator.outcome }}
+          EMULATOR_API_LEVEL: ${{ matrix.api-level }}
+          EMULATOR_PROFILE: ${{ matrix.form-factor }}
+        run: |
+          python3 scripts/report_emulator_ci.py \
+            --outcome "$EMULATOR_ACTION_OUTCOME" \
+            --api "$EMULATOR_API_LEVEL" \
+            --profile "$EMULATOR_PROFILE" \
+            --diagnostics-dir app/build/emulator-diagnostics
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -93,4 +136,5 @@ jobs:
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
             app/build/emulator-screenshots/
+            app/build/emulator-diagnostics/
           if-no-files-found: warn
