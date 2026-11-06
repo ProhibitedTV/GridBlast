@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Added a dedicated Android 8/16 emulator test that builds two real, same-signer debug APK versions, upgrades with `adb install -r` without clearing data, and verifies that board/tray/score/Undo/best and sound/motion/haptics settings survive. Signed beta and physical-device acceptance remain outstanding.
+
 - Added a dedicated API 35 emulator regression that builds two APK versions under one temporary debug signing identity, performs an in-place update while a real saved game is active, and verifies exact board/tray/score, best score and Undo continuity after upgrading. Temporary APKs remain off artifact uploads; physical owner-signed beta upgrade acceptance is still pending.
 
 - Added a fail-closed, manually dispatched owner-signed beta APK channel with pinned certificate fingerprint and increasing versionCode overrides. The permanent beta signing secret is not supplied by CI; actual beta upgrades and physical-device data continuity are still unverified.

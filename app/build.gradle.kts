@@ -13,6 +13,22 @@ val releaseSigningAvailable = listOf(
     storePath, storePasswordEnv, keyAliasEnv, keyPasswordEnv,
 ).all { !it.isNullOrBlank() }
 
+// Test-only signing identity for two successive DEBUG APK versions on one
+// emulator. CI creates and destroys this key inside the same isolated job.
+// It is never the owner's private beta or Google Play signing certificate.
+val upgradeSmokeStorePath = System.getenv("GRIDBLAST_UPGRADE_CI_KEYSTORE_FILE")
+val upgradeSmokePassword = System.getenv("GRIDBLAST_UPGRADE_CI_STORE_PASSWORD")
+val upgradeSmokeAlias = System.getenv("GRIDBLAST_UPGRADE_CI_KEY_ALIAS")
+val upgradeSmokeKeyPassword = System.getenv("GRIDBLAST_UPGRADE_CI_KEY_PASSWORD")
+val upgradeSmokeFields = listOf(
+    upgradeSmokeStorePath, upgradeSmokePassword,
+    upgradeSmokeAlias, upgradeSmokeKeyPassword,
+)
+val upgradeSmokeRequested = upgradeSmokeFields.any { !it.isNullOrBlank() }
+require(!upgradeSmokeRequested || upgradeSmokeFields.all { !it.isNullOrBlank() }) {
+    "Incomplete test-only upgrade signing configuration"
+}
+
 // Public debug builds retain the stable source default. The private, manually
 // dispatched beta channel supplies an increasing versionCode without committing
 // an owner's signing identity or rewriting source files.
@@ -56,7 +72,23 @@ android {
             }
         }
     }
+    if (upgradeSmokeRequested) {
+        signingConfigs {
+            create("gridblastUpgradeCISmoke") {
+                storeFile = file(requireNotNull(upgradeSmokeStorePath))
+                storePassword = requireNotNull(upgradeSmokePassword)
+                keyAlias = requireNotNull(upgradeSmokeAlias)
+                keyPassword = requireNotNull(upgradeSmokeKeyPassword)
+            }
+        }
+    }
     buildTypes {
+        getByName("debug") {
+            if (upgradeSmokeRequested) {
+                // AndroidTest is built against this debug signing identity.
+                signingConfig = signingConfigs.getByName("gridblastUpgradeCISmoke")
+            }
+        }
         getByName("release") {
             // Start with an unminified release while accessibility and device
             // testing remain in progress. Add shrinker testing before 1.0.
