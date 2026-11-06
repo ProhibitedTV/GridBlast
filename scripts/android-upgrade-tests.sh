@@ -10,6 +10,12 @@ runner="$pkg.test/androidx.test.runner.AndroidJUnitRunner"
 test_class=tv.prohibited.gridblast.GameProcessRecoveryTest
 out=app/build/emulator-screenshots
 mkdir -p "$out"
+# APKs are deliberately retained only in the runner's private temp dir.
+# Artifact upload includes logs and genuine screenshot, NEVER APKs or signing keys.
+: "${RUNNER_TEMP:?Required isolated GitHub Actions runner}"
+umask 077
+workdir="$(mktemp -d "$RUNNER_TEMP/gridblast-upgrade-XXXXXXXX")"
+trap 'rm -rf -- "$workdir"' EXIT HUP INT TERM
 sh scripts/verify-gradle-wrapper.sh
 adb shell wm density 160
 adb shell wm size 360x800
@@ -26,18 +32,18 @@ test_path="$(find app/build/outputs/apk/androidTest -type f -name '*-androidTest
   echo "Missing A APK or instrumentation APK" >&2
   exit 1
 }
-cp "$apk_path" "$out/GridBlast-upgrade-A-debug.apk"
-cp "$test_path" "$out/GridBlast-upgrade-A-tests.apk"
+cp "$apk_path" "$workdir/GridBlast-upgrade-A-debug.apk"
+cp "$test_path" "$workdir/GridBlast-upgrade-A-tests.apk"
 
 export GRIDBLAST_VERSION_CODE=10002
 export GRIDBLAST_VERSION_NAME=0.1-beta-ci-b
 # Force repackaging even if Gradle caches a build that used another env value.
 ./gradlew --no-daemon --rerun-tasks :app:assembleDebug
 [ -s "$apk_path" ] || { echo "Missing B APK" >&2; exit 1; }
-cp "$apk_path" "$out/GridBlast-upgrade-B-debug.apk"
+cp "$apk_path" "$workdir/GridBlast-upgrade-B-debug.apk"
 
-a="$out/GridBlast-upgrade-A-debug.apk"
-b="$out/GridBlast-upgrade-B-debug.apk"
+a="$workdir/GridBlast-upgrade-A-debug.apk"
+b="$workdir/GridBlast-upgrade-B-debug.apk"
 aapt="$ANDROID_HOME/build-tools/36.0.0/aapt"
 apksigner="$ANDROID_HOME/build-tools/36.0.0/apksigner"
 "$apksigner" verify --print-certs "$a" > "$out/GridBlast-upgrade-A-cert.txt"
@@ -59,7 +65,7 @@ echo "Two APKs verified: same CI-only signer, versions 10001 -> 10002."
 # Begin from A with a clean fixture. This is the ONLY pm clear call: no data
 # clear, uninstall or backup restore is allowed across the A -> B upgrade.
 adb install -r "$a" > "$out/GridBlast-upgrade-install-A.log"
-adb install -r "$out/GridBlast-upgrade-A-tests.apk" > "$out/GridBlast-upgrade-test-install.log"
+adb install -r "$workdir/GridBlast-upgrade-A-tests.apk" > "$out/GridBlast-upgrade-test-install.log"
 adb shell pm clear "$pkg" > "$out/GridBlast-upgrade-initial-clear.log"
 
 # The prepare phase exercises the app UI to PLACE a real move, checks on-disk
