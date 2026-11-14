@@ -84,16 +84,10 @@ object GameEngine {
      */
     internal fun refillTray(board: List<Int>, random: Random): List<Piece?> {
         val drawn = drawTray(random)
-        if (drawn.filterNotNull().any { piece ->
-                (0 until SIZE).any { row ->
-                    (0 until SIZE).any { col -> canPlace(board, piece, row, col) }
-                }
-            }) return drawn
+        if (drawn.filterNotNull().any { piece -> hasLegalPlacement(board, piece) }) return drawn
 
         val compatible = shapes.indices.mapNotNull(::pieceFromId).filter { piece ->
-            (0 until SIZE).any { row ->
-                (0 until SIZE).any { col -> canPlace(board, piece, row, col) }
-            }
+            hasLegalPlacement(board, piece)
         }
         if (compatible.isEmpty()) return drawn // A genuinely exhausted board.
 
@@ -112,11 +106,14 @@ object GameEngine {
         }
     }
 
-    fun hasAnyMove(state: GameState): Boolean = state.tray.filterNotNull().any { piece ->
+    /** True when the selected shape fits at least one position on this board. */
+    fun hasLegalPlacement(board: List<Int>, piece: Piece): Boolean =
         (0 until SIZE).any { row ->
-            (0 until SIZE).any { col -> canPlace(state.board, piece, row, col) }
+            (0 until SIZE).any { col -> canPlace(board, piece, row, col) }
         }
-    }
+
+    fun hasAnyMove(state: GameState): Boolean =
+        state.tray.filterNotNull().any { piece -> hasLegalPlacement(state.board, piece) }
 
     /**
      * Pure move analysis used both for scoring and for gameplay feedback.
