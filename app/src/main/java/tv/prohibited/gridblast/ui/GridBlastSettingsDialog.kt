@@ -59,7 +59,7 @@ fun GridBlastSettingsDialog(
                         Text("Drag or tap", fontWeight = FontWeight.Bold)
                         Text("Drag a shape onto the board, or tap a shape to select it, then tap an outlined top-left placement cell. Teal outlines are legal placements; gold outlines mark placements that immediately clear lines. Screen readers announce the number of lines and points for those gold targets. If a shape has no space left, choose another piece or press HINT. Red means a drag will not fit. You cannot rotate shapes.")
                         Text("Refill and game over", fontWeight = FontWeight.Bold)
-                        Text("After you place all three tray shapes, you receive three new ones. The status text says NEW SHAPES READY. Each new tray offers at least one legal move if any shape could still fit. The round ends when none of your available shapes can be placed.")
+                        Text("After you place all three tray shapes, you receive three new ones. Unless the move clears a line, the status text says NEW SHAPES READY. Each new tray offers at least one legal move if any shape could still fit. The round ends when none of your available shapes can be placed.")
                         Text("Hint and Undo", fontWeight = FontWeight.Bold)
                         Text("HINT previews a free suggested move. Tap the highlighted cell or press PLACE to confirm; requesting a hint never spends points or a piece. UNDO restores your last successful placement once, even after game over.")
                         Text("Your progress", fontWeight = FontWeight.Bold)
