@@ -231,12 +231,15 @@ fun GridBlastApp() {
             persist(updated)
             // Show a reward for every move; a new tray is explicitly announced.
             // This changes UI feedback, not scoring or fair-refill game logic.
-            val refilled = game.tray.count { it != null } == 1
+            val refilled = game.tray.count { it != null } == 1 && !updated.current.gameOver
+            // Saturation at Int.MAX_VALUE means a legal move may earn zero
+            // additional score; report the actual displayed score change.
+            val awardedPoints = updated.current.score - game.score
             placementMessage = when {
                 analysis.linesCleared > 0 ->
-                    "${analysis.linesCleared} ${if (analysis.linesCleared == 1) "LINE" else "LINES"} CLEARED  •  +${analysis.points}"
-                refilled -> "NEW SHAPES READY  •  +${analysis.points}"
-                else -> "SHAPE PLACED  •  +${analysis.points}"
+                    "${analysis.linesCleared} ${if (analysis.linesCleared == 1) "LINE" else "LINES"} CLEARED  •  +${awardedPoints}"
+                refilled -> "NEW SHAPES READY  •  +${awardedPoints}"
+                else -> "SHAPE PLACED  •  +${awardedPoints}"
             }
             // Cancel stale clear glows after the next move, even if it
             // doesn't clear a line. Each placement resets the feedback timer.
