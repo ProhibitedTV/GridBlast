@@ -623,7 +623,9 @@ private fun Board(
                     val tapAnalysis = if (showLegalAnchors && placeable) {
                         GameEngine.analyze(game, selectedSlot, row, col)
                     } else null
-                    val scoringAnchor = tapAnalysis != null && tapAnalysis.linesCleared > 0
+                    val clearLines = tapAnalysis?.linesCleared ?: 0
+                    val clearPoints = tapAnalysis?.points ?: 0
+                    val scoringAnchor = clearLines > 0
                     val outlinedAnchor = showLegalAnchors && placeable
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
@@ -656,9 +658,9 @@ private fun Board(
                                 contentDescription = when {
                                     scoringAnchor ->
                                         "Row ${row + 1}, column ${col + 1}: place selected shape and clear " +
-                                            "${tapAnalysis!!.linesCleared} " +
-                                            (if (tapAnalysis.linesCleared == 1) "line" else "lines") +
-                                            " for ${tapAnalysis.points} points"
+                                            "$clearLines " +
+                                            (if (clearLines == 1) "line" else "lines") +
+                                            " for $clearPoints points"
                                     placeable && isPreviewAnchor && previewClears.isNotEmpty() ->
                                         "Row ${row + 1}, column ${col + 1}: place selected shape and clear completed lines"
                                     placeable ->
