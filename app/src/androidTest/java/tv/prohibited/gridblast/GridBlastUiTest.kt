@@ -249,6 +249,10 @@ class GridBlastUiTest {
         compose.onNodeWithTag("tray-slot-0").performClick()
         compose.onNodeWithTag("board-cell-0-0").performClick()
         compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
+        // The status must report actual earned points, not an impossible +1.
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "SHAPE PLACED  •  +0",
+        )
         compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
         compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
     }
