@@ -57,7 +57,7 @@ fun GridBlastSettingsDialog(
                         Text("Fill rows or columns", fontWeight = FontWeight.Bold)
                         Text("Place the three shapes from your tray on the 8 by 8 board. Fill an entire row or column to clear it and score points. Rows and columns that cross can clear together.")
                         Text("Drag or tap", fontWeight = FontWeight.Bold)
-                        Text("Drag a shape onto the board, or tap a shape to select it, then tap an outlined top-left placement cell. Red means a drag will not fit. You cannot rotate shapes.")
+                        Text("Drag a shape onto the board, or tap a shape to select it, then tap an outlined top-left placement cell. Teal outlines are legal placements; gold outlines mark placements that immediately clear lines. Screen readers announce the number of lines and points for those gold targets. If a shape has no space left, choose another piece or press HINT. Red means a drag will not fit. You cannot rotate shapes.")
                         Text("Refill and game over", fontWeight = FontWeight.Bold)
                         Text("After you place all three tray shapes, you receive three new ones. Each new tray offers at least one legal move if any shape could still fit. The round ends when none of your available shapes can be placed.")
                         Text("Hint and Undo", fontWeight = FontWeight.Bold)
