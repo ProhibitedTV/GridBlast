@@ -31,6 +31,8 @@ fun GridBlastSettingsDialog(
     onHapticsChanged: (Boolean) -> Unit,
     onMotionChanged: (Boolean) -> Unit,
     onSoundChanged: (Boolean) -> Unit,
+    onBackupRequested: () -> Unit,
+    onRestoreRequested: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var page by remember { mutableStateOf(OptionsPage.SETTINGS) }
@@ -64,6 +66,7 @@ fun GridBlastSettingsDialog(
                         Text("HINT previews a free suggested move. Tap the highlighted cell or press PLACE to confirm; requesting a hint never spends points or a piece. UNDO restores your last successful placement once, even after game over.")
                         Text("Your progress", fontWeight = FontWeight.Bold)
                         Text("Your current round and best score save on this device. NEW starts another round; your best score stays.")
+                        Text("Options has BACK UP and RESTORE for manually copying progress using Android's file picker. Save the backup before uninstalling, or your progress may be lost.")
                     }
                 }
                 OptionsPage.PRIVACY -> {
@@ -75,6 +78,7 @@ fun GridBlastSettingsDialog(
                         Text("GridBlast does not collect, transmit, share or sell personal information. There are no ads, analytics, trackers, accounts or network access.")
                         Text("Your puzzle board, one-move undo, score, best score and options stay in the app's private storage on this device. This data is not sent to us or third parties.")
                         Text("You can delete local game data by clearing GridBlast storage in Android Settings or uninstalling the app. We do not keep a server copy.")
+                        Text("If you choose BACK UP, Android's document picker saves a small local game file wherever you choose. The app never uploads it. You control and can delete this file separately; restoring a file requires confirmation.")
                         Text("For privacy inquiries, contact ProhibitedTV through GitHub issues at github.com/ProhibitedTV/GridBlast/issues.")
                         Text("This describes GridBlast itself; the Android operating system and app store may process their own service data under separate policies.")
                     }
@@ -120,6 +124,9 @@ fun GridBlastSettingsDialog(
                                 modifier = Modifier.testTag("motion-switch"),
                             )
                         }
+                        // Preserve the original visible Help / Privacy actions on
+                        // 360x640 phones with enlarged system text. Portable
+                        // saves are still reachable by scrolling Options.
                         Text("Settings and progress stay on this device. No account or internet required.")
                         TextButton(
                             onClick = { page = OptionsPage.HOW_TO_PLAY },
@@ -129,6 +136,20 @@ fun GridBlastSettingsDialog(
                             onClick = { page = OptionsPage.PRIVACY },
                             modifier = Modifier.testTag("privacy-button"),
                         ) { Text("PRIVACY POLICY") }
+                        Text("Move progress to a differently signed build: BACK UP before uninstalling, then RESTORE afterward.")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            TextButton(
+                                onClick = onBackupRequested,
+                                modifier = Modifier.testTag("backup-game-button"),
+                            ) { Text("BACK UP") }
+                            TextButton(
+                                onClick = onRestoreRequested,
+                                modifier = Modifier.testTag("restore-game-button"),
+                            ) { Text("RESTORE") }
+                        }
                     }
                 }
             }

@@ -14,6 +14,18 @@ GridBlast is an **original, free, ad-free, offline Android block puzzle** in act
 
 **Repeat testers:** A separate [manual owner-signed beta channel](../.github/workflows/android-beta.yml) is being prepared. It requires the maintainer's persistent beta certificate and real-device install-over-install acceptance before testers should rely on it to preserve progress. **Do not install a random new debug ZIP on top of the old one expecting an update.** When a verified owner-signed beta is provided, keep using that same signed channel with increasing build versions; changing to a Google Play or another signing identity may require uninstall and erase your saved game. See [release gate #50](https://github.com/ProhibitedTV/GridBlast/issues/50).
 
+## Move saves between different signing keys
+
+GridBlast can now export and restore your game **without an account, online sync, or broad storage permissions**. This is intended for switching from a debug alpha to a differently signed beta or store build; Android itself still cannot upgrade incompatible signing certificates.
+
+1. **Before uninstalling**, open the old GridBlast app and choose **Options → BACK UP**. Save `GridBlast-backup.txt` to a location outside the app's private storage, for example Downloads. Confirm you can find the file in your Files app.
+2. Uninstall the old build *only after saving your backup*. Uninstalling will erase private app data, and a missing or damaged backup cannot be recovered by GridBlast.
+3. Install the new signed APK using normal Android installation and security prompts. Open **Options → RESTORE** and select your saved `.txt` backup using Android's system document picker.
+4. Review the displayed imported score and choose **RESTORE** to replace the current round, Undo and sound/vibration/motion settings. **CANCEL** changes nothing. The higher of the local and imported all-time best scores is retained.
+5. Verify your board, tray, score, Undo and settings in the app before discarding the saved file.
+
+Backups contain game data, **not passwords or identifiers**. They include a corruption-detection checksum, but they are **not encrypted or authenticated**. Only restore files you trust. GridBlast itself has no network permission; a third-party cloud provider selected in Android's picker could still upload the file under that provider's terms. Choose local Files storage for an entirely offline transfer. Export/import is intended for voluntary manual recovery, not automatic update or cross-device sync. A real-device backup/restore playtest is still required.
+
 Artifacts expire automatically. If the latest run has no artifact, use an earlier **successful `main`** Android CI run with an unexpired `GridBlast-debug` artifact.
 
 ## Try these five things
