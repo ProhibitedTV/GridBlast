@@ -321,7 +321,7 @@ class GridBlastUiTest {
         val occupied = (0 until 64).filter { index ->
             ((index / 8) + (index % 8)) % 2 == 1
         }.toSet()
-        loadFixture(listOf(9, 0, 1), occupied = occupied)
+        loadFixture(listOf(9, 0, 0), occupied = occupied)
         compose.onNodeWithTag("tray-slot-0").performClick()
         compose.onNodeWithTag("status-message").assertTextEquals(
             "That shape has no open space. Choose another or press HINT",
