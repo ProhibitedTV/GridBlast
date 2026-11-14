@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- Improve tap-to-place decisions: normal legal anchors remain teal, while moves that immediately clear a line get gold outlines and announce the exact lines/points to screen readers. Selecting a piece with no legal landing spot now explains how to switch pieces or request a hint. New JVM and Android emulator regressions cover blocked shapes and the scoring preview; no score, save, or HINT rules changed.
+
 - Make each board cell's full allocated square tappable, including the 2dp visual gutter on every side. The tile appearance and grid spacing are unchanged; an Android instrumentation regression now checks edge taps and adjoining hitboxes on all emulator profiles. Small-screen physical usability still needs human validation.
 
 - Added a dedicated Android 8/16 emulator test that builds two real, same-signer debug APK versions, upgrades with `adb install -r` without clearing data, and verifies that board/tray/score/Undo/best and sound/motion/haptics settings survive. Signed beta and physical-device acceptance remain outstanding.
