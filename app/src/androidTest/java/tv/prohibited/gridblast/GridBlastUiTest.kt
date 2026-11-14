@@ -249,8 +249,79 @@ class GridBlastUiTest {
         compose.onNodeWithTag("tray-slot-0").performClick()
         compose.onNodeWithTag("board-cell-0-0").performClick()
         compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
+        // The status must report actual earned points, not an impossible +1.
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "SHAPE PLACED  •  +0",
+        )
         compose.onNodeWithTag("undo-button").assertIsEnabled().performClick()
         compose.onNodeWithTag("score-value").assertTextEquals(fullScore)
+    }
+
+    @Test
+    fun regularPlacementsShowActualPointsAndUndoClearsFeedback() {
+        loadFixture(listOf(0, 9, 1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "SHAPE PLACED  •  +1",
+        )
+
+        // A second successful move must replace, not retain, the earlier score.
+        compose.onNodeWithTag("tray-slot-1").performClick()
+        compose.onNodeWithTag("board-cell-2-2").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("5")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "SHAPE PLACED  •  +4",
+        )
+
+        compose.onNodeWithTag("undo-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "Drag a shape to the board, or tap to select",
+        )
+    }
+
+    @Test
+    fun lastTrayPieceAnnouncesRefillWithoutGrantingBonusPoints() {
+        // The remaining single-cell piece is the last piece in the tray.
+        // -1 maps to null; the save codec maintains three tray slots.
+        loadFixture(listOf(0, -1, -1))
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "NEW SHAPES READY  •  +1",
+        )
+        for (slot in 0..2) {
+            assertTrue(
+                "Refill must provide a new piece in tray slot $slot",
+                compose.onNodeWithTag("tray-slot-$slot")
+                    .fetchSemanticsNode().config[SemanticsProperties.ContentDescription]
+                    .none { it == "Empty shape slot" },
+            )
+        }
+        compose.onNodeWithTag("undo-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "Drag a shape to the board, or tap to select",
+        )
+    }
+
+    @Test
+    fun lineClearFeedbackKeepsActualScoreAndUndoResetsAnnouncement() {
+        loadFixture(listOf(0, 9, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("board-cell-0-7").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("81")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "1 LINE CLEARED  •  +81",
+        )
+        compose.onNodeWithTag("undo-button").performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("0")
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "Drag a shape to the board, or tap to select",
+        )
     }
 
     @Test

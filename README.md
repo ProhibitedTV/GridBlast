@@ -19,14 +19,14 @@
 
 ## Play
 
-Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. New trays guarantee at least one legal placement when any shape can fit, so the next tray cannot end a round purely through bad luck. The round ends when no available piece can fit anywhere.
+Place shapes on an 8×8 grid. Earn **1 point per block placed**, plus **10 per cell cleared** by a completed row or column (intersections count only once). Use all three pieces to receive three new ones. New trays guarantee at least one legal placement when any shape can fit, so the next tray cannot end a round purely through bad luck. The round ends when no available piece can fit anywhere.
 
 - **Drag a piece** from the tray onto the grid. The lifted piece and board preview share the same placement anchor; red means it won't fit. Completed lines glow before you release a valid move, and the status text previews the clear and points. Invalid drops show a brief explanation without using up the piece.
 - Alternatively, **tap a piece**: valid top-left placement cells get a subtle teal outline; **gold outlines** identify placements that will clear a row or column immediately. Those scoring targets announce their exact projected lines and points to screen readers. Tap an anchor to place the piece, or tap the selected piece again to deselect. If the selected shape cannot fit anywhere, the status text suggests choosing another piece or using HINT. Outlines disappear while dragging, using a HINT preview, or after placing a piece.
 - Your current round, most recent undo checkpoint, and best score save automatically on the device.
 - **Options → HOW TO PLAY** opens an offline, scrollable rules and controls guide; returning to the game does not reset the round.
 - **New Game** asks for confirmation when you've scored points.
-- Cleared cells briefly flash and the earned points are displayed.
+- **Every successful move shows its earned points**, even without a line clear. Completed lines briefly flash when animations are enabled. Using the final piece in a tray announces **NEW SHAPES READY** when no line is cleared; a simultaneous line clear instead shows the line-clear reward. Refills never award extra points. These brief status messages are announced through screen-reader live-region semantics, cleared after a short delay, and are not added to saved-game data.
 - **Options** independently controls sound, vibration, and clear animations. Original synthesized sound effects are disabled by default. Even when enabled, effects remain silent in the device's Silent/Vibrate modes or when media is muted/at zero volume; GridBlast never changes system audio settings.
 - **Hint** is always free and available offline. Press **HINT** to preview a move and its point value; it prefers moves that do not immediately end the round, even when they score fewer points. When all moves lose, it still suggests the best scoring move. Tap the highlighted board cell **or press PLACE** to confirm it. HINT alone never spends points or moves pieces.
 - **Undo** reverts the most recent successful placement for free, including after game over. Only one turn is available at a time; it survives app restarts, and your all-time best score is never reduced.

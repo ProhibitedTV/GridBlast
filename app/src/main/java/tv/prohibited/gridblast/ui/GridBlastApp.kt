@@ -148,14 +148,15 @@ fun GridBlastApp() {
         mutableStateOf(preferences.getBoolean("motion_enabled", true))
     }
     var flashCells by remember { mutableStateOf<Set<Int>>(emptySet()) }
-    var clearMessage by remember { mutableStateOf("") }
-    var clearSequence by remember { mutableIntStateOf(0) }
+    // Transient points feedback is never saved to game progress.
+    var placementMessage by remember { mutableStateOf("") }
+    var placementSequence by remember { mutableIntStateOf(0) }
     var invalidDropMessage by remember { mutableStateOf("") }
     var invalidDropSequence by remember { mutableIntStateOf(0) }
     val clearFlash = remember { Animatable(0f) }
 
-    LaunchedEffect(clearSequence, motionEnabled) {
-        if (clearSequence > 0 && motionEnabled && flashCells.isNotEmpty()) {
+    LaunchedEffect(placementSequence, motionEnabled) {
+        if (placementSequence > 0 && motionEnabled && flashCells.isNotEmpty()) {
             clearFlash.snapTo(0.90f)
             clearFlash.animateTo(0f, animationSpec = tween(durationMillis = 380))
             flashCells = emptySet()
@@ -164,10 +165,12 @@ fun GridBlastApp() {
             flashCells = emptySet()
         }
     }
-    LaunchedEffect(clearSequence) {
-        if (clearSequence > 0) {
-            delay(1000)
-            clearMessage = ""
+    // Quick successive moves restart the timer: earlier feedback cannot
+    // dismiss the newest score announcement. Works with animations disabled.
+    LaunchedEffect(placementSequence) {
+        if (placementSequence > 0) {
+            delay(1800)
+            placementMessage = ""
         }
     }
 
@@ -199,7 +202,7 @@ fun GridBlastApp() {
         activeDrag = null
         confirmRestart = false
         flashCells = emptySet()
-        clearMessage = ""
+        placementMessage = ""
         invalidDropMessage = ""
         persist(history)
     }
@@ -211,7 +214,7 @@ fun GridBlastApp() {
         suggestedMove = null
         activeDrag = null
         flashCells = emptySet()
-        clearMessage = ""
+        placementMessage = ""
         invalidDropMessage = ""
         persist(history)
     }
@@ -226,11 +229,24 @@ fun GridBlastApp() {
             activeDrag = null
             invalidDropMessage = ""
             persist(updated)
-            if (analysis.linesCleared > 0) {
-                flashCells = if (motionEnabled) analysis.clearedIndices else emptySet()
-                clearMessage = "${analysis.linesCleared} ${if (analysis.linesCleared == 1) "LINE" else "LINES"} CLEARED  •  +${analysis.points}"
-                clearSequence++
+            // Show a reward for every move; a new tray is explicitly announced.
+            // This changes UI feedback, not scoring or fair-refill game logic.
+            val refilled = game.tray.count { it != null } == 1 && !updated.current.gameOver
+            // Saturation at Int.MAX_VALUE means a legal move may earn zero
+            // additional score; report the actual displayed score change.
+            val awardedPoints = updated.current.score - game.score
+            placementMessage = when {
+                analysis.linesCleared > 0 ->
+                    "${analysis.linesCleared} ${if (analysis.linesCleared == 1) "LINE" else "LINES"} CLEARED  •  +${awardedPoints}"
+                refilled -> "NEW SHAPES READY  •  +${awardedPoints}"
+                else -> "SHAPE PLACED  •  +${awardedPoints}"
             }
+            // Cancel stale clear glows after the next move, even if it
+            // doesn't clear a line. Each placement resets the feedback timer.
+            flashCells = if (motionEnabled && analysis.linesCleared > 0) {
+                analysis.clearedIndices
+            } else emptySet()
+            placementSequence++
             if (hapticsEnabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             if (soundEnabled) sounds.play(analysis.linesCleared > 0)
         }
@@ -363,7 +379,7 @@ fun GridBlastApp() {
                             text = when {
                                 suggestedMove != null ->
                                     "HINT: row ${suggestedMove!!.row + 1}, column ${suggestedMove!!.col + 1} (+${suggestedMove!!.points})"
-                                clearMessage.isNotEmpty() -> clearMessage
+                                placementMessage.isNotEmpty() -> placementMessage
                                 invalidDropMessage.isNotEmpty() -> invalidDropMessage
                                 activeDrag != null && previewAnalysis != null &&
                                     previewAnalysis.linesCleared > 0 ->
@@ -409,7 +425,7 @@ fun GridBlastApp() {
                                         selectedSlot = next.slot
                                         suggestedMove = next
                                         activeDrag = null
-                                        clearMessage = ""
+                                        placementMessage = ""
                                     }
                                 }
                             },
@@ -465,7 +481,7 @@ fun GridBlastApp() {
                                         place(slot, target.row, target.col)
                                     } else {
                                         // Keep the selected piece for immediate retry.
-                                        clearMessage = ""
+                                        placementMessage = ""
                                         invalidDropMessage = "That shape won't fit there. Try another spot."
                                         invalidDropSequence++
                                     }

@@ -55,15 +55,15 @@ fun GridBlastSettingsDialog(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text("Fill rows or columns", fontWeight = FontWeight.Bold)
-                        Text("Place the three shapes from your tray on the 8 by 8 board. Fill an entire row or column to clear it and score points. Rows and columns that cross can clear together.")
+                        Text("Place the three shapes from your tray on the 8 by 8 board. Each placed block earns 1 point. Each cell in a completed row or column earns 10 more points; crossed lines count their shared cell only once. Rows and columns that cross can clear together.")
                         Text("Drag or tap", fontWeight = FontWeight.Bold)
                         Text("Drag a shape onto the board, or tap a shape to select it, then tap an outlined top-left placement cell. Teal outlines are legal placements; gold outlines mark placements that immediately clear lines. Screen readers announce the number of lines and points for those gold targets. If a shape has no space left, choose another piece or press HINT. Red means a drag will not fit. You cannot rotate shapes.")
                         Text("Refill and game over", fontWeight = FontWeight.Bold)
-                        Text("After you place all three tray shapes, you receive three new ones. Each new tray offers at least one legal move if any shape could still fit. The round ends when none of your available shapes can be placed.")
+                        Text("After you place all three tray shapes, you receive three new ones. Unless the move clears a line, the status text says NEW SHAPES READY. Each new tray offers at least one legal move if any shape could still fit. The round ends when none of your available shapes can be placed.")
                         Text("Hint and Undo", fontWeight = FontWeight.Bold)
                         Text("HINT previews a free suggested move. Tap the highlighted cell or press PLACE to confirm; requesting a hint never spends points or a piece. UNDO restores your last successful placement once, even after game over.")
                         Text("Your progress", fontWeight = FontWeight.Bold)
-                        Text("Your current round and best score save on this device. NEW starts another round; your best score stays.")
+                        Text("Each move briefly shows its actual points in the status area, including moves with no line clear. This message is also announced by screen readers. Your current round and best score save on this device; transient feedback does not. NEW starts another round; your best score stays.")
                     }
                 }
                 OptionsPage.PRIVACY -> {
