@@ -65,6 +65,16 @@ class GameEngineTest {
         assertFalse(GameEngine.hasAnyMove(result))
     }
 
+    @Test fun canIdentifyShapesThatHaveNoLegalLandingSpot() {
+        // An isolated empty square can fit the one-cell piece, not a 2x2.
+        val board = List(64) { index -> if (index == 0) 0 else 3 }
+        assertTrue(GameEngine.hasLegalPlacement(board, single()))
+        assertFalse(GameEngine.hasLegalPlacement(board, square()))
+        assertFalse(GameEngine.hasLegalPlacement(List(63) { 0 }, single()))
+        assertTrue(GameEngine.hasAnyMove(GameState(board = board, tray = listOf(square(), single()))))
+        assertFalse(GameEngine.hasAnyMove(GameState(board = board, tray = listOf(square(), null))))
+    }
+
     @Test fun occupiedCellsRejectPlacement() {
         val board = MutableList(64) { 0 }
         board[1 * 8 + 1] = 1
