@@ -4,6 +4,8 @@ All notable GridBlast changes are summarized here.
 
 ## Unreleased (alpha)
 
+- All successful moves now show a short, screen-reader-friendly points announcement, including non-clearing placements. Last-piece tray refills announce NEW SHAPES READY (no bonus points); fast consecutive moves refresh the feedback and cancel stale line-clear flashes. In-app help and README explain the exact 1 point/block + 10 points/cleared cell formula. Emulator regressions cover ordinary scores, refills, line clears, and Undo feedback reset; saved game and scoring mechanics stay unchanged.
+
 - Improve tap-to-place decisions: normal legal anchors remain teal, while moves that immediately clear a line get gold outlines and announce the exact lines/points to screen readers. Selecting a piece with no legal landing spot now explains how to switch pieces or request a hint. New JVM and Android emulator regressions cover blocked shapes and the scoring preview; no score, save, or HINT rules changed.
 
 - Make each board cell's full allocated square tappable, including the 2dp visual gutter on every side. The tile appearance and grid spacing are unchanged; an Android instrumentation regression now checks edge taps and adjoining hitboxes on all emulator profiles. Small-screen physical usability still needs human validation.
