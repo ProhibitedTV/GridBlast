@@ -6,6 +6,17 @@
 
 **An original, free, ad-free Android block puzzle game.** No ads, no tracking, no accounts, no subscriptions, and no network permission. Native Kotlin and Jetpack Compose.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/android-phone.png" width="220" alt="Actual GridBlast Android emulator screenshot on a standard phone: empty game board, score display, and three puzzle pieces" />
+  <img src="docs/screenshots/compact-phone.png" width="195" alt="Actual GridBlast Android emulator screenshot on a compact 320dp phone" />
+  <img src="docs/screenshots/android-tablet.png" width="250" alt="Actual GridBlast Android emulator screenshot on an Android tablet-sized viewport" />
+</p>
+
+*Real captures of GridBlast running in [Android emulator CI](https://github.com/ProhibitedTV/GridBlast/actions/runs/42258584585) (Android 15 standard and 320dp phones; Android 16 tablet viewport), not UI mockups. These resized screenshots show the initial board, not a mid-game session. Emulator screenshots are not physical-device or final Google Play store captures.*
+
+
 ## Play
 
 Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. New trays guarantee at least one legal placement when any shape can fit, so the next tray cannot end a round purely through bad luck. The round ends when no available piece can fit anywhere.
