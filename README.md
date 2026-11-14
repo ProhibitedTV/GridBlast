@@ -22,7 +22,7 @@
 Place shapes on an 8×8 grid. Fill a row or column to clear it and score more points. Use all three pieces to receive three new ones. New trays guarantee at least one legal placement when any shape can fit, so the next tray cannot end a round purely through bad luck. The round ends when no available piece can fit anywhere.
 
 - **Drag a piece** from the tray onto the grid. The lifted piece and board preview share the same placement anchor; red means it won't fit. Completed lines glow before you release a valid move, and the status text previews the clear and points. Invalid drops show a brief explanation without using up the piece.
-- Alternatively, **tap a piece**: valid top-left placement cells get a subtle teal outline. Tap one of these anchors to place it, or tap the selected piece again to deselect. Outlines disappear while dragging, using a HINT preview, or after placing a piece.
+- Alternatively, **tap a piece**: valid top-left placement cells get a subtle teal outline; **gold outlines** identify placements that will clear a row or column immediately. Those scoring targets announce their exact projected lines and points to screen readers. Tap an anchor to place the piece, or tap the selected piece again to deselect. If the selected shape cannot fit anywhere, the status text suggests choosing another piece or using HINT. Outlines disappear while dragging, using a HINT preview, or after placing a piece.
 - Your current round, most recent undo checkpoint, and best score save automatically on the device.
 - **Options → HOW TO PLAY** opens an offline, scrollable rules and controls guide; returning to the game does not reset the round.
 - **New Game** asks for confirmation when you've scored points.
@@ -101,7 +101,7 @@ See [Google Play release checklist](docs/GOOGLE_PLAY_RELEASE_CHECKLIST.md) and [
 
 - Verify drag placement, hints, compact toolbar, TalkBack, audio behavior and performance on physical phones and tablets.
 - Production screenshots, store metadata and signing secrets.
-- Automated emulator UI tests on Android 10, Android 15, and an Android 15 320dp-wide phone layout; deeper physical-device validation, feature polish and gameplay balance.
+- Continue emulator regression coverage across the supported OS and form-factor matrix; the existing CI covers Android 8, 10, 15, 16 and compact/tablet viewports. Hands-on device validation, input ergonomics, feature polish and gameplay balance remain open.
 
 ## License
 

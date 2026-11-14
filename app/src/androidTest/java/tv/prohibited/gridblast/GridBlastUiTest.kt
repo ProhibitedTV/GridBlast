@@ -286,6 +286,56 @@ class GridBlastUiTest {
     }
 
     @Test
+    fun selectingPieceHighlightsLineClearingTargetsWithoutPreviewingOtherCells() {
+        // One gap in the first row: this tap clears a full row; a legal
+        // tap elsewhere scores just one point.
+        loadFixture(listOf(0, 9, 1), occupied = (0..6).toSet())
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        val clearing = compose.onNodeWithTag("board-cell-0-7")
+        val ordinary = compose.onNodeWithTag("board-cell-1-0")
+        clearing.assertIsEnabled().assertContentDescriptionEquals(
+            "Row 1, column 8: place selected shape and clear 1 line for 81 points",
+        )
+        assertEquals(
+            "Gold outlined line-clear target",
+            clearing.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription),
+        )
+        ordinary.assertIsEnabled().assertContentDescriptionEquals(
+            "Row 2, column 1: place selected shape",
+        )
+        assertEquals(
+            "Outlined legal placement target",
+            ordinary.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription),
+        )
+        // Choosing the ordinary anchor must never score the predicted row clear.
+        ordinary.performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+        compose.onNodeWithTag("board-cell-0-0").assertContentDescriptionEquals(
+            "Row 1, column 1: occupied",
+        )
+    }
+
+    @Test
+    fun selectedUnplayableShapeShowsGuidanceAndAllowsSwitchingPieces() {
+        // Checkerboard has gaps for a 1-cell piece, but nowhere for a 2x2.
+        val occupied = (0 until 64).filter { index ->
+            ((index / 8) + (index % 8)) % 2 == 1
+        }.toSet()
+        loadFixture(listOf(9, 0, 0), occupied = occupied)
+        compose.onNodeWithTag("tray-slot-0").performClick()
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "That shape has no open space. Choose another or press HINT",
+        )
+        compose.onNodeWithTag("board-cell-0-0").assertIsNotEnabled()
+        compose.onNodeWithTag("tray-slot-1").performClick()
+        compose.onNodeWithTag("status-message").assertTextEquals(
+            "Tap an outlined cell to place, or drag your shape",
+        )
+        compose.onNodeWithTag("board-cell-0-0").assertIsEnabled().performClick()
+        compose.onNodeWithTag("score-value").assertTextEquals("1")
+    }
+
+    @Test
     fun suggestedMoveRequiresSeparatePlaceConfirmation() {
         loadFixture(listOf(0, 11, 1), occupied = (0..6).toSet())
         compose.onNodeWithTag("hint-button").performClick()

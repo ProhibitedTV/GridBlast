@@ -82,6 +82,7 @@ private val backgroundColor = Color(0xFF10172A)
 private val panelColor = Color(0xFF202A44)
 private val emptyCellColor = Color(0xFF303D5A)
 private val highlightColor = Color(0xFF7CE0E2)
+private val scoringAnchorColor = Color(0xFFFFD56B)
 private val invalidColor = Color(0xFFED687A)
 private val shapeColors = listOf(
     Color(0xFF000000),
@@ -259,6 +260,9 @@ fun GridBlastApp() {
     val previewAnalysis = if (validPreview && previewSlot != null && previewAnchor != null) {
         GameEngine.analyze(game, previewSlot, previewAnchor.row, previewAnchor.col)
     } else null
+    val selectedPieceHasMove = game.tray.getOrNull(selectedSlot)?.let { piece ->
+        GameEngine.hasLegalPlacement(game.board, piece)
+    } ?: true
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -330,10 +334,10 @@ fun GridBlastApp() {
                         // height-constrained tablet/large-text layouts.
                         val boardSize = minOf(maxWidth, (maxHeight - 16.dp).coerceAtLeast(0.dp))
                         Board(
-                            board = game.board,
+                            game = game,
                             previewPiece = previewPiece,
                             previewClears = previewAnalysis?.clearedIndices ?: emptySet(),
-                            selectedPiece = game.tray.getOrNull(selectedSlot),
+                            selectedSlot = selectedSlot,
                             // Outlines are tap affordances, not drag/hint overlays.
                             showLegalAnchors = selectedSlot >= 0 && activeDrag == null &&
                                 suggestedMove == null && !game.gameOver,
@@ -367,6 +371,8 @@ fun GridBlastApp() {
                                         (if (previewAnalysis.linesCleared == 1) "line" else "lines") +
                                         " (+${previewAnalysis.points})"
                                 activeDrag != null -> "Drop your shape onto the board"
+                                selectedSlot >= 0 && !selectedPieceHasMove ->
+                                    "That shape has no open space. Choose another or press HINT"
                                 selectedSlot >= 0 -> "Tap an outlined cell to place, or drag your shape"
                                 else -> "Drag a shape to the board, or tap to select"
                             },
@@ -579,10 +585,10 @@ private fun ScorePanel(label: String, value: Int, modifier: Modifier = Modifier)
 
 @Composable
 private fun Board(
-    board: List<Int>,
+    game: GameState,
     previewPiece: Piece?,
     previewClears: Set<Int>,
-    selectedPiece: Piece?,
+    selectedSlot: Int,
     showLegalAnchors: Boolean,
     previewCell: Cell?,
     validPreview: Boolean,
@@ -591,6 +597,8 @@ private fun Board(
     modifier: Modifier,
     onCellTapped: (Int, Int) -> Unit,
 ) {
+    val board = game.board
+    val selectedPiece = game.tray.getOrNull(selectedSlot)
     val previewCells = if (previewPiece != null && previewCell != null) {
         previewPiece.cells.map { Cell(it.row + previewCell.row, it.col + previewCell.col) }.toSet()
     } else emptySet()
@@ -610,6 +618,14 @@ private fun Board(
                     val isPreviewAnchor = previewCell != null && previewCell.row == row && previewCell.col == col
                     val placeable = selectedPiece != null &&
                         GameEngine.canPlace(board, selectedPiece, row, col)
+                    // Only calculate scoring targets for a manually selected
+                    // shape. A drag or HINT keeps its own exact preview.
+                    val tapAnalysis = if (showLegalAnchors && placeable) {
+                        GameEngine.analyze(game, selectedSlot, row, col)
+                    } else null
+                    val clearLines = tapAnalysis?.linesCleared ?: 0
+                    val clearPoints = tapAnalysis?.points ?: 0
+                    val scoringAnchor = clearLines > 0
                     val outlinedAnchor = showLegalAnchors && placeable
                     val fill = when {
                         isPreview && !validPreview -> invalidColor.copy(alpha = 0.78f)
@@ -618,6 +634,7 @@ private fun Board(
                         row * GameEngine.SIZE + col in flashCells ->
                             lerp(emptyCellColor, highlightColor, flashAlpha)
                         id != 0 -> pieceColor(id)
+                        scoringAnchor -> lerp(emptyCellColor, scoringAnchorColor, 0.24f)
                         outlinedAnchor -> lerp(emptyCellColor, highlightColor, 0.14f)
                         else -> emptyCellColor
                     }
@@ -633,8 +650,17 @@ private fun Board(
                             .testTag("board-cell-$row-$col")
                             .clickable(enabled = placeable) { onCellTapped(row, col) }
                             .semantics {
-                                if (outlinedAnchor) stateDescription = "Outlined legal placement target"
+                                if (scoringAnchor) {
+                                    stateDescription = "Gold outlined line-clear target"
+                                } else if (outlinedAnchor) {
+                                    stateDescription = "Outlined legal placement target"
+                                }
                                 contentDescription = when {
+                                    scoringAnchor ->
+                                        "Row ${row + 1}, column ${col + 1}: place selected shape and clear " +
+                                            "$clearLines " +
+                                            (if (clearLines == 1) "line" else "lines") +
+                                            " for $clearPoints points"
                                     placeable && isPreviewAnchor && previewClears.isNotEmpty() ->
                                         "Row ${row + 1}, column ${col + 1}: place selected shape and clear completed lines"
                                     placeable ->
@@ -656,7 +682,11 @@ private fun Board(
                             .background(fill)
                             .border(
                                 1.dp,
-                                if (outlinedAnchor) highlightColor.copy(alpha = 0.70f) else Color.Transparent,
+                                when {
+                                    scoringAnchor -> scoringAnchorColor
+                                    outlinedAnchor -> highlightColor.copy(alpha = 0.70f)
+                                    else -> Color.Transparent
+                                },
                                 RoundedCornerShape(5.dp),
                             ),
                     )
